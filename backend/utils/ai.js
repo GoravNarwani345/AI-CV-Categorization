@@ -23,8 +23,8 @@ const analyzeCV = async (filePath) => {
       // We'll still try to send it to Gemini, but warn about quality
     }
 
-    // Use gemini-1.5-flash which is the recommended model
-    const modelName = "gemini-1.5-flash";
+    // Use gemini-2.0-flash which is a fast, robust model available on your new API key
+    const modelName = "gemini-2.0-flash";
     const model = genAI.getGenerativeModel({ model: modelName });
 
     const prompt = `
