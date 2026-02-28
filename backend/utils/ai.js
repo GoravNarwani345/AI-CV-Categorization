@@ -23,8 +23,8 @@ const analyzeCV = async (filePath) => {
       // We'll still try to send it to Gemini, but warn about quality
     }
 
-    // Use gemini-pro which is highly compatible across API versions
-    const modelName = "gemini-pro";
+    // Use gemini-1.5-flash which is the recommended model
+    const modelName = "gemini-1.5-flash";
     const model = genAI.getGenerativeModel({ model: modelName });
 
     const prompt = `
