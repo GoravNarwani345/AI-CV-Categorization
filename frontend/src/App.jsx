@@ -18,22 +18,20 @@ import VerifyEmail from './pages/VerifyEmail'
 
 const App = () => {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path='/' element={<Home />} />
-        <Route path='/getstarted' element={<GetStarted />} />
-        <Route path='/forgot-password' element={<ForgotPassword />} />
-        <Route path='/reset-password/:token' element={<ResetPassword />} />
-        <Route path='/verify-email/:token' element={<VerifyEmail />} />
-        <Route path='/onboarding' element={<Onboarding />} />
-        <Route path='/verification-pending' element={<VerificationPending />} />
-        <Route path='/features' element={<FeaturesPage />} />
-        <Route path='/about' element={<AboutPage />} />
-        <Route path='/contact' element={<ContactPage />} />
-        <Route path='/candidateDashboard' element={<ProtectedRoute element={<CandidateDashboard />} allowedRoles={['candidate']} />} />
-        <Route path='/recruiterDashboard' element={<ProtectedRoute element={<RecruiterDashboard />} allowedRoles={['recruiter']} />} />
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      <Route path='/' element={<Home />} />
+      <Route path='/getstarted' element={<GetStarted />} />
+      <Route path='/forgot-password' element={<ForgotPassword />} />
+      <Route path='/reset-password/:token' element={<ResetPassword />} />
+      <Route path='/verify-email/:token' element={<VerifyEmail />} />
+      <Route path='/onboarding' element={<Onboarding />} />
+      <Route path='/verification-pending' element={<VerificationPending />} />
+      <Route path='/features' element={<FeaturesPage />} />
+      <Route path='/about' element={<AboutPage />} />
+      <Route path='/contact' element={<ContactPage />} />
+      <Route path='/candidateDashboard' element={<ProtectedRoute element={<CandidateDashboard />} allowedRoles={['candidate']} />} />
+      <Route path='/recruiterDashboard' element={<ProtectedRoute element={<RecruiterDashboard />} allowedRoles={['recruiter']} />} />
+    </Routes>
   )
 }
 

@@ -100,8 +100,24 @@ export const AuthProvider = ({ children }) => {
         if (socket) socket.disconnect();
     };
 
+    const refreshUser = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        try {
+            const response = await fetch(`${API_URL}/auth/me`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            if (result.success) {
+                setUser(result.user);
+            }
+        } catch (error) {
+            console.error('Refresh user failed:', error);
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, loading, socket, setUser, login, logout }}>
+        <AuthContext.Provider value={{ user, loading, socket, setUser, login, logout, refreshUser }}>
             {children}
         </AuthContext.Provider>
     );

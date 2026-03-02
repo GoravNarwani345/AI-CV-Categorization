@@ -9,7 +9,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const Onboarding = () => {
   const [currentStep, setCurrentStep] = useState(1);
-  const { user, setUser } = useAuth();
+  const { user, setUser, refreshUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [cvUploaded, setCvUploaded] = useState(false);
@@ -68,11 +68,11 @@ const Onboarding = () => {
         toast.success("AI has successfully extracted your data and set up your profile!");
 
         // Update local user state to reflect onboarding completion
-        setUser({ ...user, onboardingCompleted: true });
+        await refreshUser();
 
-        // Immediate redirect to dashboard as requested by user
+        // Immediate redirect to correct dashboard based on role
         setTimeout(() => {
-          navigate('/candidateDashboard');
+          navigate(user.role === 'recruiter' ? '/recruiterDashboard' : '/candidateDashboard');
         }, 1500);
       } else {
         throw new Error(result.error);
@@ -108,7 +108,7 @@ const Onboarding = () => {
 
       const result = await response.json();
       if (result.success) {
-        setUser({ ...user, onboardingCompleted: true });
+        await refreshUser();
         toast.success("Profile setup completed! Welcome back.");
         navigate(user.role === 'recruiter' ? '/recruiterDashboard' : '/candidateDashboard');
       } else {
@@ -146,7 +146,7 @@ const Onboarding = () => {
 
       const result = await response.json();
       if (result.success) {
-        setUser({ ...user, onboardingCompleted: true });
+        await refreshUser();
         toast.success("Profile setup completed successfully!");
         navigate(user.role === 'recruiter' ? '/recruiterDashboard' : '/candidateDashboard');
       } else {

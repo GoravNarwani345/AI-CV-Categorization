@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaUser, FaCheckCircle, FaClock, FaBriefcase, FaChartLine, FaUpload, FaEdit, FaSearch, FaBell, FaTrophy, FaFileAlt, FaBars } from "react-icons/fa";
+import { toast } from "react-toastify";
 import Sidebar from "../components/Sidebar";
 import FileUpload from "../components/FileUpload";
 import JobRecommendations from "../components/JobRecommendations";
@@ -12,13 +13,14 @@ import TopBar from "../components/TopBar";
 import Messaging from "../components/Messaging";
 import ChatPopup from "../components/ChatPopup";
 import MyApplications from "../components/MyApplications";
+import CVCustomizer from "../components/CVCustomizer";
 import { fetchData } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import CVViewerModal from "../components/CVViewerModal";
 
 const CandidateDashboard = () => {
   const [selectedSection, setSelectedSection] = useState("overview");
-  const { user: userData, loading: authLoading, setUser } = useAuth();
+  const { user: userData, loading: authLoading, setUser, refreshUser } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [openConversationId, setOpenConversationId] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -44,13 +46,42 @@ const CandidateDashboard = () => {
     }
   }, [authLoading, userData]);
 
-  const handleUploadSuccess = (data) => {
-    setUser(prev => ({
-      ...prev,
-      cvUrl: data.cvUrl,
-      cvFileName: data.cvFileName,
-      cvUploadedAt: new Date().toISOString()
-    }));
+  const handleUploadSuccess = async (data) => {
+    // Update user state with the full profile returned from the backend
+    if (data.profile) {
+      // Refresh user from backend to get perfect structure and avoid redirects
+      await refreshUser();
+
+      // Redirect to profile section
+      setSelectedSection("profile");
+      toast.success("CV analyzed! Redirecting to your profile...");
+
+      // Check for missing fields to notify user
+      const missingFields = [];
+      if (!data.profile.basicInfo?.bio) missingFields.push("Bio");
+      if (!data.profile.skills || data.profile.skills.length === 0) missingFields.push("Skills");
+      if (!data.profile.experience || data.profile.experience.length === 0) missingFields.push("Experience");
+      if (!data.profile.education || data.profile.education.length === 0) missingFields.push("Education");
+      if (!data.profile.basicInfo?.phone) missingFields.push("Phone Number");
+
+      if (missingFields.length > 0) {
+        setTimeout(() => {
+          toast.info(`Please check and complete: ${missingFields.join(", ")}`, {
+            autoClose: 10000,
+            position: "top-center"
+          });
+        }, 1500);
+      }
+    } else {
+      // Fallback for older versions or unexpected responses
+      setUser(prev => ({
+        ...prev,
+        cvUrl: data.cvUrl,
+        cvFileName: data.cvFileName,
+        cvUploadedAt: new Date().toISOString()
+      }));
+      setSelectedSection("profile");
+    }
   };
 
   const renderContent = () => {
@@ -62,12 +93,6 @@ const CandidateDashboard = () => {
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <div className="flex items-center gap-4 md:block mb-4 md:mb-0">
-                    <button
-                      onClick={() => setIsSidebarOpen(true)}
-                      className="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                    >
-                      <FaBars size={24} />
-                    </button>
                     <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Welcome back, {userData?.name || "User"}!</h1>
                   </div>
                   <p className="text-gray-600 hidden md:block">Here's your career progress overview and personalized recommendations.</p>
@@ -162,6 +187,8 @@ const CandidateDashboard = () => {
         return <SkillGapAnalysis user={userData} />;
       case "career":
         return <CareerTips />;
+      case "cv-customizer":
+        return <CVCustomizer />;
       case "messages":
         return <Messaging initialConversationId={openConversationId} />;
       default:
@@ -177,20 +204,43 @@ const CandidateDashboard = () => {
   if (isLoading) return <Preloader />;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <TopBar user={userData} />
-      <div className="flex pt-16 h-screen overflow-hidden">
+    <div className="h-screen bg-gray-50 flex overflow-hidden relative">
+      {/* Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm transition-opacity duration-300"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar - Fixed/Absolute when toggleable */}
+      <div className={`
+        fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out h-full
+        ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
+      `}>
         <Sidebar
-          setSelectedSection={setSelectedSection}
+          setSelectedSection={(section) => {
+            setSelectedSection(section);
+            setIsSidebarOpen(false); // Hide after selection
+          }}
           selectedSection={selectedSection}
           isOpen={isSidebarOpen}
           setIsOpen={setIsSidebarOpen}
         />
-        <div className="flex-1 p-4 md:p-6 overflow-y-auto">
-          {renderContent()}
-        </div>
       </div>
-      <ChatPopup onOpenChat={handleOpenChat} />
+
+      <div className="flex-1 flex flex-col min-w-0 h-full relative transition-all duration-300">
+        <TopBar user={userData} onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+
+        <main className="flex-1 mt-16 overflow-hidden relative flex flex-col">
+          <div className={`flex-1 ${selectedSection === 'cv-customizer' ? 'overflow-hidden' : 'overflow-y-auto p-4 md:p-6'}`}>
+            {renderContent()}
+          </div>
+        </main>
+
+        <ChatPopup onOpenChat={handleOpenChat} />
+      </div>
+
       <CVViewerModal
         isOpen={isCVModalOpen}
         onClose={() => setIsCVModalOpen(false)}

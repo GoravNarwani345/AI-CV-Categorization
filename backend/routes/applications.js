@@ -222,43 +222,8 @@ router.get('/:id/ai-insights', auth, async (req, res) => {
             return res.status(404).json({ success: false, error: 'Candidate profile not found' });
         }
 
-        const { GoogleGenerativeAI } = require("@google/generative-ai");
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
-
-        const prompt = `
-            You are a senior technical recruiter. Analyze the following candidate profile against the job description.
-            
-            Job Description:
-            Title: ${application.job.title}
-            Description: ${application.job.description}
-            Skills Required: ${JSON.stringify(application.job.skills)}
-
-            Candidate Profile:
-            Skills: ${JSON.stringify(profile.skills)}
-            Experience: ${JSON.stringify(profile.experience)}
-            Education: ${JSON.stringify(profile.education)}
-
-            Provide:
-            1. A 2-sentence "Executive Summary" of why this candidate is or isn't a good fit.
-            2. 3 targeted "Technical Interview Questions" that specifically address the gaps or strengths in their background relative to this job.
-            3. A 3-item "Screening Checklist" of specific items the recruiter MUST verify during the first call.
-
-            Return ONLY a clean JSON object: 
-            {
-                "summary": "...",
-                "interviewQuestions": ["...", "...", "..."],
-                "screeningChecklist": ["...", "...", "..."]
-            }
-        `;
-
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        let jsonString = response.text();
-
-        // Clean markdown
-        jsonString = jsonString.replace(/```json/g, "").replace(/```/g, "").trim();
-        const insights = JSON.parse(jsonString);
+        const { getAIInsights } = require('../utils/ai');
+        const insights = await getAIInsights(application.job, profile);
 
         res.json({ success: true, data: insights });
     } catch (err) {
@@ -315,34 +280,8 @@ router.get('/:id/outreach-draft', auth, async (req, res) => {
             return res.status(404).json({ success: false, error: 'Candidate profile not found' });
         }
 
-        const { GoogleGenerativeAI } = require("@google/generative-ai");
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
-
-        const prompt = `
-            You are a world-class executive recruiter known for high-conversion personalized outreach.
-            Write a professional, warm, and highly personalized LinkedIn-style outreach message from a recruiter to a candidate who has applied for a job.
-            
-            Job Details:
-            Title: ${application.job.title}
-            Company: ${application.job.company}
-            
-            Candidate Background:
-            Name: ${application.candidate.name}
-            Experience: ${JSON.stringify(profile.experience)}
-            Skills: ${JSON.stringify(profile.skills)}
-            
-            Instructions:
-            1. Mention a specific highlight from their experience that makes them a great fit.
-            2. Be concise (max 150 words).
-            3. Include a clear call to action to chat further.
-            4. Do NOT use placeholders like [Name]; use the actual data provided.
-            5. Return ONLY the text of the message.
-        `;
-
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const draft = response.text().trim();
+        const { getOutreachDraft } = require('../utils/ai');
+        const draft = await getOutreachDraft(application.job, application.candidate, profile);
 
         res.json({ success: true, data: draft });
     } catch (err) {

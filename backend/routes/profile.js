@@ -45,9 +45,35 @@ router.put('/me', auth, async (req, res) => {
             updatedAt: Date.now()
         };
 
+        // 1. Fetch the existing profile to capture history
+        const existingProfile = await Profile.findOne({ user: req.user.id });
+
+        let updateQuery = { $set: profileFields };
+
+        if (existingProfile) {
+            // Check if there are actual changes worth saving in history
+            // For simplicity, we save a snapshot if experience, basicInfo, or skills are present
+            const historySnapshot = {
+                basicInfo: existingProfile.basicInfo,
+                education: existingProfile.education,
+                experience: existingProfile.experience,
+                skills: existingProfile.skills,
+                timestamp: existingProfile.updatedAt || Date.now()
+            };
+
+            // Limit history to 10 versions
+            updateQuery.$push = {
+                history: {
+                    $each: [historySnapshot],
+                    $position: 0,
+                    $slice: 10
+                }
+            };
+        }
+
         let profile = await Profile.findOneAndUpdate(
             { user: req.user.id },
-            { $set: profileFields },
+            updateQuery,
             { new: true, upsert: true }
         );
 

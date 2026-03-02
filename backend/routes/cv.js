@@ -163,4 +163,65 @@ router.post('/analyze', auth, async (req, res) => {
     }
 });
 
+// AI Rephrase Text
+router.post('/rephrase', auth, async (req, res) => {
+    try {
+        const { text, context } = req.body;
+
+        if (!text || !context) {
+            return res.status(400).json({ success: false, error: 'Text and context are required' });
+        }
+
+        console.log(`🤖 AI Rephrase requested by user: ${req.user.id}`);
+        // We need to import rephraseText, so let's destructure it at the top or here.
+        // It's already destructured at the top in the next step, wait, let's fix the imports too.
+        const { rephraseText } = require('../utils/ai');
+
+        const rephrasedText = await rephraseText(text, context);
+
+        res.json({
+            success: true,
+            data: rephrasedText
+        });
+
+    } catch (error) {
+        console.error('AI Rephrase Error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to rephrase text'
+        });
+    }
+});
+
+// AI Customize CV for Job
+router.post('/customize', auth, async (req, res) => {
+    try {
+        const { jobInfo, conversation } = req.body;
+
+        if (!jobInfo) {
+            return res.status(400).json({ success: false, error: 'Job Information is required' });
+        }
+
+        const profile = await Profile.findOne({ user: req.user.id });
+        if (!profile) {
+            return res.status(404).json({ success: false, error: 'Profile not found' });
+        }
+
+        const { getCustomizedCV } = require('../utils/ai');
+        const result = await getCustomizedCV(profile, jobInfo, conversation || []);
+
+        res.json({
+            success: true,
+            data: result
+        });
+
+    } catch (error) {
+        console.error('AI CV Customization Error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to customize CV'
+        });
+    }
+});
+
 module.exports = router;

@@ -14,6 +14,7 @@ import CVViewerModal from '../components/CVViewerModal';
 
 const RecruiterDashboard = () => {
   const [selectedSection, setSelectedSection] = useState('candidates');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { user: userData, loading: authLoading } = useAuth();
   const [candidates, setCandidates] = useState([]);
   const [candidatesLoading, setCandidatesLoading] = useState(true);
@@ -178,17 +179,36 @@ const RecruiterDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <RecruiterSidebar
-        selectedSection={selectedSection}
-        onSectionChange={setSelectedSection}
-      />
-      <div className="flex-1 flex flex-col">
-        <TopBar user={userData} onSearch={setSearchTerm} />
-        <main className="p-8 mt-16 overflow-y-auto">
+    <div className="h-screen bg-gray-50 flex overflow-hidden relative">
+      {/* Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm transition-opacity duration-300"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar - Fixed/Absolute when toggleable */}
+      <div className={`
+        fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out h-full
+        ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
+      `}>
+        <RecruiterSidebar
+          selectedSection={selectedSection}
+          onSectionChange={(section) => {
+            setSelectedSection(section);
+            setIsSidebarOpen(false); // Hide after selection
+          }}
+        />
+      </div>
+
+      <div className="flex-1 flex flex-col min-w-0 h-full relative transition-all duration-300">
+        <TopBar user={userData} onSearch={setSearchTerm} onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <main className="flex-1 mt-16 overflow-y-auto p-4 md:p-8">
           {renderContent()}
         </main>
       </div>
+      <ChatPopup onOpenChat={handleOpenChat} />
       <CVViewerModal
         isOpen={isCVModalOpen}
         onClose={() => setIsCVModalOpen(false)}

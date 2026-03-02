@@ -3,8 +3,14 @@ import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaEdit, FaSave, FaTimes, F
 import { toast } from "react-toastify";
 import Loader from "./Loader";
 import { updateProfile } from "../services/api";
+import { useAuth } from "../contexts/AuthContext";
+import PrintableCV from "./PrintableCV";
+import { FaHistory, FaEye } from "react-icons/fa";
 
 const Profile = ({ user }) => {
+  const { refreshUser } = useAuth();
+  const [activeTab, setActiveTab] = useState('overview');
+  const [selectedHistory, setSelectedHistory] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -87,6 +93,7 @@ const Profile = ({ user }) => {
       const res = await updateProfile(user.uid, payload);
       if (res.success) {
         setIsEditing(false);
+        await refreshUser(); // Update global auth state to include new history entries
         toast.success("Profile updated successfully!");
       } else {
         throw new Error(res.error || 'Failed to update profile');
@@ -124,20 +131,23 @@ const Profile = ({ user }) => {
           <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 flex-shrink-0">
             <FaUser size={32} />
           </div>
-          <div>
-            {isEditing ? (
-              <input
-                type="text"
-                value={profileData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                className="text-xl md:text-2xl font-bold text-gray-800 border-b border-gray-300 focus:outline-none w-full"
-              />
-            ) : (
-              <h2 className="text-xl md:text-2xl font-bold text-gray-800">{profileData.name || "User Name"}</h2>
-            )}
-            <p className="text-gray-500 capitalize">{user?.role || "Candidate"}</p>
-          </div>
         </div>
+
+        <div className="flex bg-gray-100 p-1 rounded-xl">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'overview' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            Overview
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'history' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            <FaHistory size={14} /> CV History
+          </button>
+        </div>
+
         {!isEditing ? (
           <button
             onClick={() => setIsEditing(true)}
@@ -164,204 +174,276 @@ const Profile = ({ user }) => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left Column */}
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Contact Information</h3>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 text-gray-600 text-sm md:text-base">
-                <FaEnvelope className="text-blue-500 flex-shrink-0" />
-                <span className="truncate">{profileData.email}</span>
+      {
+        activeTab === 'overview' ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Column */}
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Contact Information</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-gray-600 text-sm md:text-base">
+                    <FaEnvelope className="text-blue-500 flex-shrink-0" />
+                    <span className="truncate">{profileData.email}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-gray-600 text-sm md:text-base">
+                    <FaPhone className="text-blue-500 flex-shrink-0" />
+                    {isEditing ? (
+                      <input
+                        type="tel"
+                        value={profileData.phone}
+                        onChange={(e) => handleInputChange('phone', e.target.value)}
+                        className="border-b border-gray-300 focus:outline-none w-full"
+                      />
+                    ) : (
+                      <span>{profileData.phone || "Not set"}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 text-gray-600 text-sm md:text-base">
+                    <FaMapMarkerAlt className="text-blue-500 flex-shrink-0" />
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={profileData.location}
+                        onChange={(e) => handleInputChange('location', e.target.value)}
+                        className="border-b border-gray-300 focus:outline-none w-full"
+                      />
+                    ) : (
+                      <span>{profileData.location || "Not set"}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 text-gray-600 text-sm md:text-base">
+                    <span className="text-blue-500 font-bold w-5">Age</span>
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        value={profileData.Age}
+                        onChange={(e) => handleInputChange('Age', e.target.value)}
+                        className="border-b border-gray-300 focus:outline-none w-20"
+                      />
+                    ) : (
+                      <span>{profileData.Age || "Not set"}</span>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-3 text-gray-600 text-sm md:text-base">
-                <FaPhone className="text-blue-500 flex-shrink-0" />
+
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">Bio</h3>
                 {isEditing ? (
-                  <input
-                    type="tel"
-                    value={profileData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                    className="border-b border-gray-300 focus:outline-none w-full"
+                  <textarea
+                    value={profileData.bio}
+                    onChange={(e) => handleInputChange('bio', e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows="4"
                   />
                 ) : (
-                  <span>{profileData.phone || "Not set"}</span>
-                )}
-              </div>
-              <div className="flex items-center gap-3 text-gray-600 text-sm md:text-base">
-                <FaMapMarkerAlt className="text-blue-500 flex-shrink-0" />
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={profileData.location}
-                    onChange={(e) => handleInputChange('location', e.target.value)}
-                    className="border-b border-gray-300 focus:outline-none w-full"
-                  />
-                ) : (
-                  <span>{profileData.location || "Not set"}</span>
-                )}
-              </div>
-              <div className="flex items-center gap-3 text-gray-600 text-sm md:text-base">
-                <span className="text-blue-500 font-bold w-5">Age</span>
-                {isEditing ? (
-                  <input
-                    type="number"
-                    value={profileData.Age}
-                    onChange={(e) => handleInputChange('Age', e.target.value)}
-                    className="border-b border-gray-300 focus:outline-none w-20"
-                  />
-                ) : (
-                  <span>{profileData.Age || "Not set"}</span>
+                  <p className="text-gray-600 text-sm md:text-base">{profileData.bio || "No bio added yet."}</p>
                 )}
               </div>
             </div>
-          </div>
 
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Bio</h3>
-            {isEditing ? (
-              <textarea
-                value={profileData.bio}
-                onChange={(e) => handleInputChange('bio', e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows="4"
-              />
-            ) : (
-              <p className="text-gray-600 text-sm md:text-base">{profileData.bio || "No bio added yet."}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Right Column */}
-        <div className="space-y-6">
-          {/* Skills */}
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">Skills</h3>
-              {isEditing && (
-                <button
-                  onClick={() => addItem('skills', { name: '', level: 'Beginner' })}
-                  className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
-                >
-                  <FaPlus size={12} /> Add
-                </button>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {isEditing ? (
-                <div className="w-full space-y-2">
-                  {profileData.skills.length > 0 ? (
-                    profileData.skills.map((skill, index) => (
-                      <div key={index} className="flex flex-col sm:flex-row gap-2 pb-2 border-b border-gray-100 sm:border-none">
-                        <input
-                          type="text"
-                          value={skill.name}
-                          onChange={(e) => handleArrayChange('skills', index, 'name', e.target.value)}
-                          className="flex-1 p-2 border border-gray-300 rounded text-sm"
-                          placeholder="Skill name"
-                        />
-                        <div className="flex gap-2">
-                          <select
-                            value={skill.level}
-                            onChange={(e) => handleArrayChange('skills', index, 'level', e.target.value)}
-                            className="flex-1 p-2 border border-gray-300 rounded text-xs"
-                          >
-                            <option>Beginner</option>
-                            <option>Intermediate</option>
-                            <option>Advanced</option>
-                            <option>Expert</option>
-                          </select>
-                          <button onClick={() => removeItem('skills', index)} className="text-red-500 p-2"><FaTrash size={14} /></button>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
+            {/* Right Column */}
+            <div className="space-y-6">
+              {/* Skills */}
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800">Skills</h3>
+                  {isEditing && (
                     <button
                       onClick={() => addItem('skills', { name: '', level: 'Beginner' })}
-                      className="w-full py-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:bg-gray-50 text-sm"
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
                     >
-                      Add first skill
+                      <FaPlus size={12} /> Add
                     </button>
                   )}
                 </div>
+                <div className="flex flex-wrap gap-2">
+                  {isEditing ? (
+                    <div className="w-full space-y-2">
+                      {profileData.skills.length > 0 ? (
+                        profileData.skills.map((skill, index) => (
+                          <div key={index} className="flex flex-col sm:flex-row gap-2 pb-2 border-b border-gray-100 sm:border-none">
+                            <input
+                              type="text"
+                              value={skill.name}
+                              onChange={(e) => handleArrayChange('skills', index, 'name', e.target.value)}
+                              className="flex-1 p-2 border border-gray-300 rounded text-sm"
+                              placeholder="Skill name"
+                            />
+                            <div className="flex gap-2">
+                              <select
+                                value={skill.level}
+                                onChange={(e) => handleArrayChange('skills', index, 'level', e.target.value)}
+                                className="flex-1 p-2 border border-gray-300 rounded text-xs"
+                              >
+                                <option>Beginner</option>
+                                <option>Intermediate</option>
+                                <option>Advanced</option>
+                                <option>Expert</option>
+                              </select>
+                              <button onClick={() => removeItem('skills', index)} className="text-red-500 p-2"><FaTrash size={14} /></button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <button
+                          onClick={() => addItem('skills', { name: '', level: 'Beginner' })}
+                          className="w-full py-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:bg-gray-50 text-sm"
+                        >
+                          Add first skill
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    profileData.skills.length > 0 ? (
+                      profileData.skills.map((skill, index) => (
+                        <span key={index} className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs md:text-sm font-medium">
+                          {skill.name} ({skill.level})
+                        </span>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 italic text-sm">No skills added yet.</p>
+                    )
+                  )}
+                </div>
+              </div>
+
+              {/* Education & Experience simplified for layout */}
+              <div className="grid grid-cols-1 gap-6">
+                {/* Experience */}
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-800">Experience</h3>
+                    {isEditing && (
+                      <button
+                        onClick={() => addItem('experience', { title: '', company: '', duration: '', description: '' })}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+                      >
+                        <FaPlus size={12} /> Add
+                      </button>
+                    )}
+                  </div>
+                  <div className="space-y-4">
+                    {profileData.experience.map((exp, index) => (
+                      <div key={index} className="border-l-4 border-blue-500 pl-4 py-2 bg-gray-50 rounded-r-lg">
+                        {isEditing ? (
+                          <div className="space-y-2">
+                            <input
+                              type="text"
+                              value={exp.title}
+                              onChange={(e) => handleArrayChange('experience', index, 'title', e.target.value)}
+                              className="w-full bg-transparent border-b border-gray-300 text-sm font-bold"
+                              placeholder="Job Title"
+                            />
+                            <button onClick={() => removeItem('experience', index)} className="text-red-500 text-xs flex items-center gap-1"><FaTrash size={10} /> Remove</button>
+                          </div>
+                        ) : (
+                          <>
+                            <h4 className="font-bold text-gray-800 text-sm md:text-base">{exp.title}</h4>
+                            <p className="text-blue-600 text-xs md:text-sm">{exp.company} | {exp.duration}</p>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Education */}
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-800">Education</h3>
+                    {isEditing && (
+                      <button
+                        onClick={() => addItem('education', { degree: '', institution: '', year: '', grade: '' })}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+                      >
+                        <FaPlus size={12} /> Add
+                      </button>
+                    )}
+                  </div>
+                  <div className="space-y-4">
+                    {profileData.education.map((edu, index) => (
+                      <div key={index} className="border-l-4 border-purple-500 pl-4 py-2 bg-gray-50 rounded-r-lg">
+                        <h4 className="font-bold text-gray-800 text-sm md:text-base">{edu.degree}</h4>
+                        <p className="text-purple-600 text-xs md:text-sm">{edu.institution}, {edu.year}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-gray-800">Previous CV Snapshots</h3>
+              <p className="text-xs text-gray-400">Captured automatically during profile updates.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {user.history && user.history.length > 0 ? (
+                user.history.map((snapshot, idx) => (
+                  <div key={idx} className="bg-gray-50 border border-gray-100 rounded-2xl p-5 hover:border-blue-200 transition-all group">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h4 className="font-bold text-gray-800">Version {user.history.length - idx}</h4>
+                        <p className="text-xs text-gray-500">{new Date(snapshot.timestamp).toLocaleString()}</p>
+                      </div>
+                      <button
+                        onClick={() => setSelectedHistory(snapshot)}
+                        className="p-2 bg-white text-blue-600 rounded-lg shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-all"
+                      >
+                        <FaEye />
+                      </button>
+                    </div>
+                    <div className="flex gap-3 text-[10px] font-black uppercase tracking-tighter text-gray-400">
+                      <span className="bg-white px-2 py-1 rounded border border-gray-100">{(snapshot.experience || []).length} Roles</span>
+                      <span className="bg-white px-2 py-1 rounded border border-gray-100">{(snapshot.skills || []).length} Skills</span>
+                    </div>
+                  </div>
+                ))
               ) : (
-                profileData.skills.length > 0 ? (
-                  profileData.skills.map((skill, index) => (
-                    <span key={index} className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs md:text-sm font-medium">
-                      {skill.name} ({skill.level})
-                    </span>
-                  ))
-                ) : (
-                  <p className="text-gray-500 italic text-sm">No skills added yet.</p>
-                )
+                <div className="col-span-full py-12 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                  <FaHistory size={40} className="mx-auto text-gray-300 mb-3" />
+                  <p className="text-gray-500">No version history available yet.</p>
+                  <p className="text-xs text-gray-400 mt-1">Start customizing your CV to create snapshots.</p>
+                </div>
               )}
             </div>
           </div>
+        )
+      }
 
-          {/* Education & Experience simplified for layout */}
-          <div className="grid grid-cols-1 gap-6">
-            {/* Experience */}
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">Experience</h3>
-                {isEditing && (
-                  <button
-                    onClick={() => addItem('experience', { title: '', company: '', duration: '', description: '' })}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
-                  >
-                    <FaPlus size={12} /> Add
-                  </button>
-                )}
-              </div>
-              <div className="space-y-4">
-                {profileData.experience.map((exp, index) => (
-                  <div key={index} className="border-l-4 border-blue-500 pl-4 py-2 bg-gray-50 rounded-r-lg">
-                    {isEditing ? (
-                      <div className="space-y-2">
-                        <input
-                          type="text"
-                          value={exp.title}
-                          onChange={(e) => handleArrayChange('experience', index, 'title', e.target.value)}
-                          className="w-full bg-transparent border-b border-gray-300 text-sm font-bold"
-                          placeholder="Job Title"
-                        />
-                        <button onClick={() => removeItem('experience', index)} className="text-red-500 text-xs flex items-center gap-1"><FaTrash size={10} /> Remove</button>
-                      </div>
-                    ) : (
-                      <>
-                        <h4 className="font-bold text-gray-800 text-sm md:text-base">{exp.title}</h4>
-                        <p className="text-blue-600 text-xs md:text-sm">{exp.company} | {exp.duration}</p>
-                      </>
-                    )}
+      {/* History Preview Modal */}
+      {
+        selectedHistory && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300 overflow-hidden">
+            <div className="bg-white w-full max-w-[230mm] h-full max-h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
+              <div className="p-4 bg-slate-900 text-white flex justify-between items-center shrink-0">
+                <div className="flex items-center gap-3">
+                  <FaHistory className="text-blue-400" />
+                  <div>
+                    <h3 className="font-bold">Historical Snapshot</h3>
+                    <p className="text-[10px] text-slate-400 uppercase tracking-widest">{new Date(selectedHistory.timestamp).toLocaleString()}</p>
                   </div>
-                ))}
+                </div>
+                <button
+                  onClick={() => setSelectedHistory(null)}
+                  className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center"
+                >
+                  <FaTimes />
+                </button>
               </div>
-            </div>
-
-            {/* Education */}
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">Education</h3>
-                {isEditing && (
-                  <button
-                    onClick={() => addItem('education', { degree: '', institution: '', year: '', grade: '' })}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
-                  >
-                    <FaPlus size={12} /> Add
-                  </button>
-                )}
-              </div>
-              <div className="space-y-4">
-                {profileData.education.map((edu, index) => (
-                  <div key={index} className="border-l-4 border-purple-500 pl-4 py-2 bg-gray-50 rounded-r-lg">
-                    <h4 className="font-bold text-gray-800 text-sm md:text-base">{edu.degree}</h4>
-                    <p className="text-purple-600 text-xs md:text-sm">{edu.institution}, {edu.year}</p>
-                  </div>
-                ))}
+              <div className="flex-1 overflow-y-auto bg-gray-100 p-8 scrollbar-hide">
+                <div className="bg-white shadow-xl mx-auto origin-top transform scale-[0.9] lg:scale-100">
+                  <PrintableCV profile={selectedHistory} user={user} />
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        )
+      }
     </div>
   );
 };

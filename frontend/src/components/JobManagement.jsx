@@ -356,17 +356,17 @@ const JobManagement = ({ onViewCV, onOpenChat }) => {
                   <div className="space-y-6">
                     {applicants.map((app) => (
                       <div key={app._id} className="bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
-                        <div className="p-4 flex items-center justify-between bg-white border-b border-gray-100">
+                        <div className="p-4 flex flex-col xl:flex-row xl:items-center justify-between bg-white border-b border-gray-100 gap-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
-                              {app.candidate?.name.charAt(0)}
+                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold shrink-0">
+                              {app.candidate?.name?.charAt(0) || '?'}
                             </div>
-                            <div>
-                              <p className="font-bold text-gray-800">{app.candidate?.name}</p>
-                              <p className="text-xs text-gray-500">{app.candidate?.email}</p>
+                            <div className="min-w-0">
+                              <p className="font-bold text-gray-800 truncate">{app.candidate?.name || 'Unknown'}</p>
+                              <p className="text-xs text-gray-500 truncate">{app.candidate?.email || 'No email'}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <button
                               onClick={() => handleStartChat(app.candidate?.user?._id || app.candidate?.user)}
                               className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"

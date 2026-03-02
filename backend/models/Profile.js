@@ -50,6 +50,33 @@ const profileSchema = new mongoose.Schema({
     cvUrl: String,
     cvFileName: String,
     cvUploadedAt: Date,
+    history: [{
+        basicInfo: {
+            phone: String,
+            location: String,
+            bio: String
+        },
+        education: [{
+            degree: String,
+            institution: String,
+            year: String,
+            grade: String
+        }],
+        experience: [{
+            title: String,
+            company: String,
+            duration: String,
+            description: String
+        }],
+        skills: [{
+            name: String,
+            level: String
+        }],
+        timestamp: {
+            type: Date,
+            default: Date.now
+        }
+    }],
     updatedAt: {
         type: Date,
         default: Date.now
