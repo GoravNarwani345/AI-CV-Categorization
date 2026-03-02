@@ -23,7 +23,7 @@ const Profile = ({ user }) => {
     experience: [],
     education: [],
     preferences: {},
-    Age: ""
+    age: ""
   });
 
   useEffect(() => {
@@ -38,7 +38,7 @@ const Profile = ({ user }) => {
         experience: user.experience || [],
         education: user.education || [],
         preferences: user.preferences || {},
-        Age: user.Age || ""
+        age: user.basicInfo?.age || user.age || ""
       });
     }
   }, [user]);
@@ -87,7 +87,7 @@ const Profile = ({ user }) => {
         education: profileData.education,
         experience: profileData.experience,
         preferences: profileData.preferences,
-        Age: profileData.Age
+        age: profileData.age
       };
 
       const res = await updateProfile(user.uid, payload);
@@ -118,7 +118,7 @@ const Profile = ({ user }) => {
         experience: user.experience || [],
         education: user.education || [],
         preferences: user.preferences || {},
-        Age: user.Age || ""
+        age: user.basicInfo?.age || user.age || ""
       });
     }
     setIsEditing(false);
@@ -217,12 +217,12 @@ const Profile = ({ user }) => {
                     {isEditing ? (
                       <input
                         type="number"
-                        value={profileData.Age}
-                        onChange={(e) => handleInputChange('Age', e.target.value)}
+                        value={profileData.age}
+                        onChange={(e) => handleInputChange('age', e.target.value)}
                         className="border-b border-gray-300 focus:outline-none w-20"
                       />
                     ) : (
-                      <span>{profileData.Age || "Not set"}</span>
+                      <span>{profileData.age || "Not set"}</span>
                     )}
                   </div>
                 </div>

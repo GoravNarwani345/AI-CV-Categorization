@@ -16,6 +16,20 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Get recruiter's own jobs
+router.get('/me', auth, async (req, res) => {
+    try {
+        if (req.user.role !== 'recruiter') {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+        const jobs = await Job.find({ recruiter: req.user.id }).sort({ postedDate: -1 });
+        res.json({ success: true, data: jobs });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, error: 'Server error' });
+    }
+});
+
 // Create a job (Recruiter only)
 router.post('/', auth, async (req, res) => {
     if (req.user.role !== 'recruiter') {
@@ -148,6 +162,11 @@ router.get('/:id/best-candidates', auth, async (req, res) => {
         const job = await Job.findById(req.params.id);
         if (!job) {
             return res.status(404).json({ success: false, error: 'Job not found' });
+        }
+
+        // Check if user is the recruiter who posted it
+        if (job.recruiter.toString() !== req.user.id) {
+            return res.status(401).json({ success: false, error: 'Not authorized' });
         }
 
         // Fetch all candidate profiles

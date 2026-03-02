@@ -91,13 +91,13 @@ router.get('/job/:jobId', auth, async (req, res) => {
         }
 
         // Verify the job belongs to this recruiter
-        const job = await Job.findById(req.jobId);
+        const job = await Job.findById(req.params.jobId);
         // Note: For now we don't strictly enforce recruiter ownership in the model but we should check it
 
         const applications = await Application.find({ job: req.params.jobId })
             .populate({
                 path: 'candidate',
-                select: 'name email profile',
+                select: 'name email',
             })
             .sort({ appliedDate: -1 });
 

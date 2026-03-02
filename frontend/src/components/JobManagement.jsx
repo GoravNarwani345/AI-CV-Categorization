@@ -24,12 +24,13 @@ const JobManagement = ({ onViewCV, onOpenChat }) => {
     if (!user) return;
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/jobs`);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/jobs/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       const result = await response.json();
       if (result.success) {
-        // Find jobs posted by this recruiter - use .id or .uid depending on what's in user object
-        const myJobs = result.data.filter(job => job.recruiter === user.id || job.recruiter === user.uid);
-        setJobs(myJobs);
+        setJobs(result.data);
       }
     } catch (error) {
       console.error('Error fetching jobs:', error);
@@ -534,9 +535,15 @@ const JobManagement = ({ onViewCV, onOpenChat }) => {
                             </div>
                           </div>
                         </div>
-                        <p className="text-xs text-gray-600 italic leading-relaxed bg-gray-50 p-2 rounded-lg border-l-2 border-purple-400">
+                        <p className="text-xs text-gray-600 italic leading-relaxed bg-gray-50 p-2 rounded-lg border-l-2 border-purple-400 mb-2">
                           "{cad.matchReason}"
                         </p>
+                        {cad.requirementsMatch && (
+                          <div className="flex items-start gap-2 bg-blue-50/50 p-2 rounded-lg">
+                            <span className="text-[10px] font-bold text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded mt-0.5 uppercase tracking-tight">Reg. Fit</span>
+                            <p className="text-[11px] text-gray-700 leading-tight">{cad.requirementsMatch}</p>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

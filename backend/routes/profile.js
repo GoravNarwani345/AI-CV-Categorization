@@ -33,7 +33,7 @@ router.get('/me', auth, async (req, res) => {
 // Update profile
 router.put('/me', auth, async (req, res) => {
     try {
-        const { basicInfo, education, experience, skills, recruiterInfo, preferences, onboardingCompleted } = req.body;
+        const { name, basicInfo, education, experience, skills, recruiterInfo, preferences, onboardingCompleted } = req.body;
 
         const profileFields = {
             basicInfo,
@@ -52,7 +52,6 @@ router.put('/me', auth, async (req, res) => {
 
         if (existingProfile) {
             // Check if there are actual changes worth saving in history
-            // For simplicity, we save a snapshot if experience, basicInfo, or skills are present
             const historySnapshot = {
                 basicInfo: existingProfile.basicInfo,
                 education: existingProfile.education,
@@ -77,6 +76,11 @@ router.put('/me', auth, async (req, res) => {
             { new: true, upsert: true }
         );
 
+        // Update User model name if provided
+        if (name) {
+            await User.findByIdAndUpdate(req.user.id, { name });
+        }
+
         // If onboarding is completed, update the user model too
         if (onboardingCompleted) {
             await User.findByIdAndUpdate(req.user.id, { onboardingCompleted: true });
@@ -84,8 +88,8 @@ router.put('/me', auth, async (req, res) => {
 
         res.json({ success: true, data: profile });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, error: 'Server error' });
+        console.error('Update Profile Error:', error);
+        res.status(500).json({ success: false, error: 'Server error during profile update' });
     }
 });
 
@@ -109,39 +113,18 @@ router.get('/user/:userId', auth, async (req, res) => {
 router.get('/career-tips', auth, async (req, res) => {
     try {
         const profile = await Profile.findOne({ user: req.user.id });
-        if (!profile) {
-            return res.status(404).json({ success: false, error: 'Profile not found' });
+        if (!profile || (profile.skills.length === 0 && profile.experience.length === 0)) {
+            return res.json({
+                success: true,
+                data: {
+                    tips: [{ title: "Complete Your Profile", description: "Upload your CV or manually add skills and experience to get AI career suggestions.", iconType: "lightbulb" }],
+                    courses: []
+                }
+            });
         }
 
-        // Logic to generate tips using Gemini
-        const { GoogleGenerativeAI } = require("@google/generative-ai");
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
-
-        const prompt = `
-            Based on the following candidate profile, provide:
-            1. 4 personalized career tips/suggestions.
-            2. 3-4 recommended certificate courses that would help this candidate bridge skill gaps or advance their career.
-
-            Return ONLY a JSON object: 
-            { 
-              "tips": [{ "title": "...", "description": "...", "iconType": "book|cert|users|lightbulb" }],
-              "courses": [{ "title": "...", "description": "...", "provider": "Coursera|Udemy|edX|Other", "type": "Free|Paid", "relevance": "Explain why this helps", "platformUrl": "https://..." }]
-            }
-            
-            Profile:
-            Experience: ${JSON.stringify(profile.experience)}
-            Skills: ${JSON.stringify(profile.skills)}
-            Education: ${JSON.stringify(profile.education)}
-        `;
-
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        let jsonString = response.text();
-
-        // Clean markdown
-        jsonString = jsonString.replace(/```json/g, "").replace(/```/g, "").trim();
-        const careerData = JSON.parse(jsonString);
+        const { getCareerTips } = require('../utils/ai');
+        const careerData = await getCareerTips(profile);
 
         res.json({ success: true, data: careerData });
     } catch (error) {

@@ -10,7 +10,8 @@ const profileSchema = new mongoose.Schema({
     basicInfo: {
         phone: String,
         location: String,
-        bio: String
+        bio: String,
+        age: Number
     },
     education: [{
         degree: String,
@@ -54,7 +55,8 @@ const profileSchema = new mongoose.Schema({
         basicInfo: {
             phone: String,
             location: String,
-            bio: String
+            bio: String,
+            age: Number
         },
         education: [{
             degree: String,

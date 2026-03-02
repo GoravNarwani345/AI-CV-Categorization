@@ -138,7 +138,7 @@ const getJobMatches = async (profile, jobs) => {
         ${jobs.map(j => `ID: ${j._id}, Title: ${j.title}, Requirements: ${JSON.stringify(j.skills)}, Description: ${j.description}`).join('\n\n')}
 
         Return ONLY a JSON array of objects: 
-        [{"jobId": "...", "matchScore": 85, "reason": "short explanation"}]
+        [{"candidateId": "...", "name": "...", "matchScore": 95, "matchReason": "Overall fit summary", "requirementsMatch": "..." }]
         `;
 
     const result = await model.generateContent(prompt);
@@ -160,7 +160,8 @@ const getRankedCandidates = async (job, candidates) => {
         Job Details:
         Title: ${job.title}
         Description: ${job.description}
-        Skills Required: ${JSON.stringify(job.skills)}
+        Skills Requested: ${JSON.stringify(job.skills)}
+        Formal Requirements: ${JSON.stringify(job.requirements)}
 
         Candidate Pool:
         ${candidates.map(p => `
@@ -168,17 +169,20 @@ const getRankedCandidates = async (job, candidates) => {
             Name: ${p.user.name}
             Skills: ${JSON.stringify(p.skills)}
             Experience: ${JSON.stringify(p.experience)}
+            Education: ${JSON.stringify(p.education)}
         `).join('\n')}
 
-        Evaluate each candidate and provide:
-        1. A matchScore (0-100).
-        2. A brief matchReason (1 sentence) explaining their fit.
-        3. Return the top 5 candidates ranked by score.
-
-        Return ONLY a JSON array:
+        Evaluate each candidate against BOTH the technical skills and the formal requirements. 
+        
+        Return ONLY a JSON array of the top 5 candidates:
         [
-            { "candidateId": "...", "name": "...", "matchScore": 95, "matchReason": "..." },
-            ...
+            { 
+              "candidateId": "...", 
+              "name": "...", 
+              "matchScore": 95, 
+              "matchReason": "Overall fit summary",
+              "requirementsMatch": "How they meet specific requirements (e.g. 'Has required degree and 5 years experience')" 
+            }
         ]
         `;
 
@@ -202,6 +206,7 @@ const getAIInsights = async (job, profile) => {
         Title: ${job.title}
         Description: ${job.description}
         Skills Required: ${JSON.stringify(job.skills)}
+        Formal Requirements: ${JSON.stringify(job.requirements)}
 
         Candidate Profile:
         Skills: ${JSON.stringify(profile.skills)}
@@ -306,6 +311,38 @@ const getCustomizedCV = async (profile, jobInfo, conversation = []) => {
   }
 };
 
+const getCareerTips = async (profile) => {
+  try {
+    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+
+    const prompt = `
+        You are a senior career advisor. Based STRICTLY on the candidate's unique profile details below, provide:
+        1. 4 SPECIFIC, non-generic career tips/suggestions that leverage their existing experience and address their actual skill gaps.
+        2. 3-4 recommended certificate courses that would logically be the next step for this specific professional journey.
+
+        Avoid generic advice like "networking" or "keep learning". Instead, mention specific technologies, roles, or industry trends relevant to their experience.
+
+        Return ONLY a JSON object: 
+        { 
+          "tips": [{ "title": "...", "description": "...", "iconType": "book|cert|users|lightbulb" }],
+          "courses": [{ "title": "...", "description": "...", "provider": "Coursera|Udemy|edX|Other", "type": "Free|Paid", "relevance": "Explain why this helps", "platformUrl": "https://..." }]
+        }
+        
+        Profile:
+        Experience: ${JSON.stringify(profile.experience)}
+        Skills: ${JSON.stringify(profile.skills)}
+        Education: ${JSON.stringify(profile.education)}
+    `;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return parseAIResponse(response.text());
+  } catch (error) {
+    console.error('AI Career Tips Error:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   analyzeCV,
   rephraseText,
@@ -313,5 +350,6 @@ module.exports = {
   getRankedCandidates,
   getAIInsights,
   getOutreachDraft,
-  getCustomizedCV
+  getCustomizedCV,
+  getCareerTips
 };

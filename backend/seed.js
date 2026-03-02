@@ -27,9 +27,9 @@ const seedData = async () => {
         ]);
         console.log('🧹 Cleared existing data');
 
-        // 1. Create Recruiter
-        const recruiter = await User.create({
-            name: 'Alex Recruiter',
+        // 1. Create Recruiters (Multi-Role Testing)
+        const alexRecruiter = await User.create({
+            name: 'Alex Johnson',
             email: 'recruiter@example.com',
             password: 'password123',
             role: 'recruiter',
@@ -37,139 +37,191 @@ const seedData = async () => {
             onboardingCompleted: true
         });
 
-        await Profile.create({
-            user: recruiter._id,
-            recruiterInfo: {
-                companyName: 'Innovation Hub',
-                industry: 'Tech',
-                companySize: '201-500 employees',
-                website: 'https://innovation.example.com',
-                contactEmail: 'hiring@innovation.example.com',
-                companyDescription: 'Building the future of AI-driven tools.'
-            }
+        const sarahHR = await User.create({
+            name: 'Sarah HR',
+            email: 'sarah.hr@example.com',
+            password: 'password123',
+            role: 'recruiter',
+            isVerified: true,
+            onboardingCompleted: true
         });
+
+        await Profile.create([
+            {
+                user: alexRecruiter._id,
+                recruiterInfo: {
+                    companyName: 'Innovation Hub',
+                    industry: 'Tech',
+                    companySize: '201-500 employees',
+                    website: 'https://innovation.example.com',
+                    companyDescription: 'Building the future of AI-driven tools.'
+                }
+            },
+            {
+                user: sarahHR._id,
+                recruiterInfo: {
+                    companyName: 'Global Solutions',
+                    industry: 'Consulting',
+                    companySize: '1000+ employees',
+                    website: 'https://globalsolutions.com',
+                    companyDescription: 'Large scale enterprise consulting and staffing.'
+                }
+            }
+        ]);
 
         // 2. Create Diverse Candidates
         const candidates = await User.create([
             { name: 'Sarah Chen', email: 'sarah@example.com', password: 'password123', role: 'candidate', isVerified: true, onboardingCompleted: true },
             { name: 'Marcus Miller', email: 'marcus@example.com', password: 'password123', role: 'candidate', isVerified: true, onboardingCompleted: true },
             { name: 'Elena Rodriguez', email: 'elena@example.com', password: 'password123', role: 'candidate', isVerified: true, onboardingCompleted: true },
-            { name: 'Kuldip Singh', email: 'kuldip@example.com', password: 'password123', role: 'candidate', isVerified: true, onboardingCompleted: true }
+            { name: 'Kuldip Singh', email: 'kuldip@example.com', password: 'password123', role: 'candidate', isVerified: true, onboardingCompleted: true },
+            { name: 'John Doe', email: 'john@example.com', password: 'password123', role: 'candidate', isVerified: true, onboardingCompleted: true }
         ]);
 
         // Profiles for candidates
         const profiles = [
             {
                 user: candidates[0]._id,
-                basicInfo: { location: 'Seattle, WA', bio: 'Expert React Native & Frontend Architect.' },
-                skills: [{ name: 'React', level: 'Expert' }, { name: 'TypeScript', level: 'Expert' }, { name: 'Node.js', level: 'Advanced' }],
-                experience: [{ title: 'Principal Engineer', company: 'CloudScale', duration: '3 years', description: 'Architected micro-frontends.' }],
-                cvUploadedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // 30 days ago
+                basicInfo: { location: 'Seattle, WA', bio: 'Expert React Native & Frontend Architect with a passion for clean UI.', age: 28 },
+                skills: [{ name: 'React', level: 'Expert' }, { name: 'TypeScript', level: 'Expert' }, { name: 'Node.js', level: 'Advanced' }, { name: 'GraphQL', level: 'Advanced' }],
+                education: [{ degree: 'B.S. Computer Science', institution: 'MIT', year: '2018', grade: '3.9 GPA' }],
+                experience: [{
+                    title: 'Principal Engineers',
+                    company: 'CloudScale',
+                    duration: '3 years',
+                    description: 'Architected micro-frontends and led a team of 10 developers for a high-traffic SaaS platform.'
+                }],
+                cvUploadedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
             },
             {
                 user: candidates[1]._id,
-                basicInfo: { location: 'Austin, TX', bio: 'Backend Heavy Full Stack Engineer.' },
-                skills: [{ name: 'Node.js', level: 'Expert' }, { name: 'Python', level: 'Advanced' }, { name: 'MongoDB', level: 'Expert' }],
-                experience: [{ title: 'Backend Lead', company: 'DataFlow', duration: '5 years', description: 'Managed distributed systems.' }],
-                cvUploadedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000) // 15 days ago
+                basicInfo: { location: 'Austin, TX', bio: 'Backend Heavy Full Stack Engineer specialized in high-throughput systems.', age: 32 },
+                skills: [{ name: 'Node.js', level: 'Expert' }, { name: 'Python', level: 'Advanced' }, { name: 'MongoDB', level: 'Expert' }, { name: 'Redis', level: 'Advanced' }],
+                education: [{ degree: 'M.S. Software Engineering', institution: 'UT Austin', year: '2015', grade: 'First Class' }],
+                experience: [{
+                    title: 'Backend Lead',
+                    company: 'DataFlow',
+                    duration: '5 years',
+                    description: 'Managed distributed systems, optimized database queries reducing latency by 40%.'
+                }],
+                cvUploadedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000)
             },
             {
                 user: candidates[2]._id,
-                basicInfo: { location: 'Madrid, Spain', bio: 'UX/UI focused Frontend Developer.' },
+                basicInfo: { location: 'Madrid, Spain', bio: 'UX/UI focused Frontend Developer with experience in design systems.', age: 25 },
                 skills: [{ name: 'React', level: 'Advanced' }, { name: 'Figma', level: 'Expert' }, { name: 'Tailwind', level: 'Expert' }],
-                experience: [{ title: 'UI Designer', company: 'CreativePulse', duration: '2 years', description: 'Designing high-fidelity prototypes.' }],
-                cvUploadedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) // 5 days ago
+                education: [{ degree: 'B.A. Graphic Design', institution: 'Complutense University', year: '2020', grade: 'Honors' }],
+                experience: [{
+                    title: 'UI Designer',
+                    company: 'CreativePulse',
+                    duration: '2 years',
+                    description: 'Designing high-fidelity prototypes and collaborating with developers on Figma-to-Code workflows.'
+                }],
+                cvUploadedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
             },
             {
                 user: candidates[3]._id,
-                basicInfo: { location: 'New Delhi, India', bio: 'AI Enthusiast & Python Developer.' },
+                basicInfo: { location: 'New Delhi, India', bio: 'AI Enthusiast & Python Developer focusing on LLMs and RAG.', age: 24 },
                 skills: [{ name: 'Python', level: 'Expert' }, { name: 'Machine Learning', level: 'Advanced' }, { name: 'Node.js', level: 'Intermediate' }],
-                experience: [{ title: 'Python Dev', company: 'AILabs', duration: '1 year', description: 'Working on LLM fine-tuning.' }],
+                education: [{ degree: 'B.Tech Information Technology', institution: 'IIT Delhi', year: '2021', grade: '9.2 CGPA' }],
+                experience: [{
+                    title: 'Junior Machine Learning Engineer',
+                    company: 'AILabs',
+                    duration: '1 year',
+                    description: 'Working on LLM fine-tuning, prompt engineering, and implementing RAG pipelines.'
+                }],
                 cvUploadedAt: new Date()
+            },
+            {
+                user: candidates[4]._id,
+                basicInfo: { location: 'New York, NY', bio: 'Early career developer eager to learn.', age: 22 },
+                skills: [{ name: 'HTML', level: 'Advanced' }, { name: 'CSS', level: 'Advanced' }, { name: 'JavaScript', level: 'Intermediate' }],
+                education: [{ degree: 'B.S. Information Systems', institution: 'NYU', year: '2023', grade: '3.5 GPA' }],
+                experience: [{
+                    title: 'Intern',
+                    company: 'StartUp XYZ',
+                    duration: '6 months',
+                    description: 'Assisted in building landing pages and simple CRUD functionalities.'
+                }],
+                cvUploadedAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000)
             }
         ];
         await Profile.insertMany(profiles);
 
-        // 3. Create Sample Jobs (Diverse to show matching)
-        const jobData = [
+        // 3. Create Diverse Jobs
+        const alexJobs = [
             {
-                recruiter: recruiter._id,
+                recruiter: alexRecruiter._id,
                 title: 'Senior Frontend Engineer',
                 company: 'Innovation Hub',
                 location: 'Remote',
-                type: 'Full-time',
                 salary: '$140k - $170k',
-                description: 'We need a React expert to lead our dashboard team.',
-                requirements: ['React expertise', 'TypeScript knowledge', 'Eye for design'],
-                skills: ['React', 'TypeScript', 'Tailwind'],
+                description: 'We need a React expert to lead our dashboard team. Experience with design systems is a plus.',
+                requirements: ['React expertise', 'TypeScript knowledge', 'B.S. in Computer Science', '3+ years experience'],
+                skills: ['React', 'TypeScript', 'Tailwind', 'GraphQL'],
                 postedDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)
             },
             {
-                recruiter: recruiter._id,
-                title: 'Full Stack Developer',
+                recruiter: alexRecruiter._id,
+                title: 'Full Stack Ninja',
                 company: 'Innovation Hub',
-                location: 'Hybrid',
-                type: 'Full-time',
+                location: 'Hybrid (NYC)',
                 salary: '$120k - $150k',
-                description: 'Help us bridge the gap between our Node.js backend and React frontend.',
-                requirements: ['Node.js', 'React', 'NoSQL databases'],
-                skills: ['React', 'Node.js', 'MongoDB'],
+                description: 'Build end-to-end features using Node.js and React.',
+                requirements: ['Proficient in Node.js', 'React experience', 'Database management'],
+                skills: ['React', 'Node.js', 'MongoDB', 'Redis'],
                 postedDate: new Date()
-            },
-            {
-                recruiter: recruiter._id,
-                title: 'Python / AI Developer',
-                company: 'AILabs (Partner)',
-                location: 'San Francisco, CA',
-                type: 'Contract',
-                salary: '$90 - $120 / hr',
-                description: 'Building LLM-powered applications.',
-                requirements: ['Python mastery', 'Experience with OpenAI API', 'Fast learner'],
-                skills: ['Python', 'Machine Learning'],
-                postedDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
             }
         ];
-        const savedJobs = await Job.insertMany(jobData);
 
-        // 4. Create Applications (the data for both dashboards)
+        const sarahJobs = [
+            {
+                recruiter: sarahHR._id,
+                title: 'Technical Project Manager',
+                company: 'Global Solutions',
+                location: 'London / Remote',
+                salary: '£70k - £90k',
+                description: 'Liaise between clients and our engineering teams.',
+                requirements: ['PM experience', 'Technical background', 'Agile/Scrum'],
+                skills: ['Project Management', 'Agile', 'Jira'],
+                postedDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+            }
+        ];
+
+        const savedAlexJobs = await Job.insertMany(alexJobs);
+        const savedSarahJobs = await Job.insertMany(sarahJobs);
+        const allJobs = [...savedAlexJobs, ...savedSarahJobs];
+
+        // 4. Create Applications (Testing various statuses)
         const apps = [
-            // Sarah Chen (Frontend Expert) - Applied to Job 1 (Match)
-            { candidate: candidates[0]._id, job: savedJobs[0]._id, status: 'Shortlisted', appliedDate: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000) },
-
-            // Marcus Miller (Backend Expert) - Applied to Job 2 (Match)
-            { candidate: candidates[1]._id, job: savedJobs[1]._id, status: 'Interview', appliedDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) },
-
-            // Kuldip Singh (AI Dev) - Applied to Job 3 (Match)
-            { candidate: candidates[3]._id, job: savedJobs[2]._id, status: 'Applied', appliedDate: new Date() },
-
-            // Elena Rodriguez (UI/UX) - Applied to Job 1 (Partial Match)
-            { candidate: candidates[2]._id, job: savedJobs[0]._id, status: 'Applied', appliedDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) }
+            { candidate: candidates[0]._id, job: savedAlexJobs[0]._id, status: 'Shortlisted', appliedDate: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000) },
+            { candidate: candidates[2]._id, job: savedAlexJobs[0]._id, status: 'Interview', appliedDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) },
+            { candidate: candidates[1]._id, job: savedAlexJobs[1]._id, status: 'Applied', appliedDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) },
+            { candidate: candidates[3]._id, job: savedAlexJobs[1]._id, status: 'Rejected', appliedDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) },
+            { candidate: candidates[4]._id, job: savedAlexJobs[0]._id, status: 'Applied', appliedDate: new Date() },
+            { candidate: candidates[0]._id, job: savedSarahJobs[0]._id, status: 'Applied', appliedDate: new Date() }
         ];
         await Application.insertMany(apps);
 
-        // 5. Create Conversations & Messages (for demoing chat)
-        const conv = await Conversation.create({ participants: [recruiter._id, candidates[0]._id] });
+        // 5. Create Conversations & Messages
+        const conv = await Conversation.create({ participants: [alexRecruiter._id, candidates[0]._id] });
         const lastMsg = await Message.create({
             conversation: conv._id,
-            sender: recruiter._id,
-            content: 'Hi Sarah, I loved your portfolio! Can we chat about the Senior Frontend role?'
+            sender: alexRecruiter._id,
+            content: 'Hi Sarah, I saw your profile and it is impressive. Are you available for a quick call tomorrow?'
         });
         conv.lastMessage = lastMsg._id;
         await conv.save();
 
-        // 6. Create Notifications for BOTH roles
+        // 6. Create Notifications
         await Notification.insertMany([
-            // Recruiter Notifications
-            { recipient: recruiter._id, sender: candidates[0]._id, type: 'application', content: 'Sarah Chen applied for Senior Frontend Engineer', link: '/recruiter/jobs' },
-            { recipient: recruiter._id, sender: candidates[3]._id, type: 'application', content: 'Kuldip Singh applied for Python / AI Developer', link: '/recruiter/jobs' },
-
-            // Candidate Notifications
-            { recipient: candidates[0]._id, sender: recruiter._id, type: 'status_update', content: 'Your application for Senior Frontend Engineer was updated to Shortlisted', link: '/candidate/applications' },
-            { recipient: candidates[1]._id, sender: recruiter._id, type: 'status_update', content: 'Good news! Innovation Hub invited you for an Interview.', link: '/candidate/applications' },
-            { recipient: candidates[0]._id, sender: recruiter._id, type: 'message', content: 'Alex Recruiter sent you a message.', link: '/candidate/messages' }
+            { recipient: alexRecruiter._id, sender: candidates[4]._id, type: 'application', content: 'John Doe applied for Senior Frontend Engineer', link: '/recruiter/jobs' },
+            { recipient: candidates[0]._id, sender: alexRecruiter._id, type: 'status_update', content: 'Your application for Senior Frontend Engineer was updated to Shortlisted', link: '/candidate/applications' },
+            { recipient: candidates[2]._id, sender: alexRecruiter._id, type: 'status_update', content: 'Interview scheduled for UI Designer role.', link: '/candidate/applications' },
+            { recipient: candidates[0]._id, sender: alexRecruiter._id, type: 'message', content: 'Alex Johnson sent you a new message.', link: '/candidate/messages' }
         ]);
 
-        console.log('✨ Database seeded with complete testing data for both roles!');
+        console.log('✨ Database fully seeded with multi-recruiter, multi-status, and deep candidate data!');
         process.exit(0);
     } catch (error) {
         console.error('❌ Seeding failed:', error);
