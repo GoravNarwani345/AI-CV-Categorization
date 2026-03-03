@@ -74,6 +74,8 @@ const profileSchema = new mongoose.Schema({
             name: String,
             level: String
         }],
+        cvUrl: String,
+        cvFileName: String,
         timestamp: {
             type: Date,
             default: Date.now

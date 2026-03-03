@@ -51,16 +51,18 @@ router.put('/me', auth, async (req, res) => {
         let updateQuery = { $set: profileFields };
 
         if (existingProfile) {
-            // Check if there are actual changes worth saving in history
+            // Capture history snapshot BEFORE updating
             const historySnapshot = {
                 basicInfo: existingProfile.basicInfo,
                 education: existingProfile.education,
                 experience: existingProfile.experience,
                 skills: existingProfile.skills,
+                cvUrl: existingProfile.cvUrl,
+                cvFileName: existingProfile.cvFileName,
                 timestamp: existingProfile.updatedAt || Date.now()
             };
 
-            // Limit history to 10 versions
+            // Limit history to 10 versions and add to $push
             updateQuery.$push = {
                 history: {
                     $each: [historySnapshot],
@@ -68,6 +70,7 @@ router.put('/me', auth, async (req, res) => {
                     $slice: 10
                 }
             };
+            console.log(`📜 History snapshot created for user: ${req.user.id}`);
         }
 
         let profile = await Profile.findOneAndUpdate(

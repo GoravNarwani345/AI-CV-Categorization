@@ -120,7 +120,9 @@ const CVCustomizer = () => {
             basicInfo: version.basicInfo,
             education: version.education,
             experience: version.experience,
-            skills: version.skills
+            skills: version.skills,
+            cvUrl: version.cvUrl,
+            cvFileName: version.cvFileName
         });
         setIsHistoryOpen(false);
         toast.success("Version restored! Don't forget to save if you want to keep it.");
@@ -377,12 +379,15 @@ const CVCustomizer = () => {
 
             {/* AI Questions Modal */}
             {aiQuestions.length > 0 && (
-                <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
+                    onClick={(e) => e.target === e.currentTarget && setAiQuestions([])}
+                >
                     <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-white/20 animate-in zoom-in-95 duration-300">
                         <div className="bg-gradient-to-br from-indigo-600 to-blue-700 p-8 text-white relative">
-                            <div className="absolute top-6 right-8 text-white/20 group cursor-pointer" onClick={() => setAiQuestions([])}>
-                                <FaTrash className="group-hover:text-white transition-colors" />
-                            </div>
+                            <button className="absolute top-6 right-8 text-white/40 group cursor-pointer hover:text-white transition-colors p-2" onClick={() => setAiQuestions([])}>
+                                <FaTimes size={20} />
+                            </button>
                             <div className="w-16 h-16 bg-white/20 rounded-2xl backdrop-blur-md flex items-center justify-center mb-4">
                                 <FaRobot size={32} />
                             </div>
@@ -426,15 +431,18 @@ const CVCustomizer = () => {
 
             {/* History Modal */}
             {isHistoryOpen && (
-                <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
+                    onClick={(e) => e.target === e.currentTarget && setIsHistoryOpen(false)}
+                >
                     <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-white/20 animate-in zoom-in-95 duration-300 max-h-[80vh]">
                         <div className="bg-slate-800 p-6 text-white flex justify-between items-center">
                             <div>
                                 <h3 className="text-xl font-bold">CV Version History</h3>
                                 <p className="text-slate-400 text-xs mt-1">Select a snapshot to restore your CV to that state.</p>
                             </div>
-                            <button onClick={() => setIsHistoryOpen(false)} className="text-white/50 hover:text-white">
-                                <FaTrash />
+                            <button onClick={() => setIsHistoryOpen(false)} className="text-white/50 hover:text-white transition-colors p-2">
+                                <FaTimes size={20} />
                             </button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-6 space-y-4">

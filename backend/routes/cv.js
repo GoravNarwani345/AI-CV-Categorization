@@ -64,7 +64,8 @@ router.post('/upload', auth, upload.single('cv'), async (req, res) => {
         const updateData = {
             cvUrl: cvUrl,
             cvFileName: req.file.originalname,
-            cvUploadedAt: Date.now()
+            cvUploadedAt: Date.now(),
+            updatedAt: Date.now()
         };
 
         if (aiData) {
@@ -74,9 +75,31 @@ router.post('/upload', auth, upload.single('cv'), async (req, res) => {
             if (aiData.skills) updateData.skills = aiData.skills;
         }
 
+        const updateQuery = { $set: updateData };
+
+        // Push current state to history if profile exists
+        const existingProfile = await Profile.findOne({ user: req.user.id });
+        if (existingProfile) {
+            updateQuery.$push = {
+                history: {
+                    $each: [{
+                        basicInfo: existingProfile.basicInfo,
+                        education: existingProfile.education,
+                        experience: existingProfile.experience,
+                        skills: existingProfile.skills,
+                        cvUrl: existingProfile.cvUrl,
+                        cvFileName: existingProfile.cvFileName,
+                        timestamp: existingProfile.updatedAt || Date.now()
+                    }],
+                    $position: 0,
+                    $slice: 10
+                }
+            };
+        }
+
         const profile = await Profile.findOneAndUpdate(
             { user: req.user.id },
-            { $set: updateData },
+            updateQuery,
             { new: true, upsert: true }
         );
 

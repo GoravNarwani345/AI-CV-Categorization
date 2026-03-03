@@ -273,11 +273,13 @@ const getCustomizedCV = async (profile, jobInfo, conversation = []) => {
     const model = genAI.getGenerativeModel({ model: MODEL_NAME });
 
     const prompt = `
-        You are an elite AI Career Coach specializing in hyper-personalized CV customization.
+        You are a World-Class AI Career Architect specializing in high-converting, ATS-optimized CV customization.
         
         GOAL:
-        Customize the candidate's CV for a specific job. If you have enough information, generate the content. 
-        If crucial information is missing (e.g., job-specific keywords in their background), ask brief, high-impact questions.
+        Customize the candidate's CV for a specific target job. 
+        
+        CORE PRINCIPLE: 
+        Always prioritize EXISTING information in the Candidate Profile. If the profile contains projects, achievements, or metrics that can be mapped to the job requirements, use them! Only ask questions if you genuinely cannot find any relevant proof-points to tailor the content effectively.
 
         TARGET JOB:
         ${jobInfo}
@@ -286,20 +288,34 @@ const getCustomizedCV = async (profile, jobInfo, conversation = []) => {
         Bio: ${profile.basicInfo.bio}
         Experience: ${JSON.stringify(profile.experience)}
         Skills: ${JSON.stringify(profile.skills)}
+        Education: ${JSON.stringify(profile.education)}
 
         CONVERSATION HISTORY:
         ${conversation.map(c => `${c.role === 'user' ? 'Candidate' : 'AI'}: ${c.text}`).join('\n')}
 
         INSTRUCTIONS:
-        1. Evaluate if the Candidate Profile (including Conversation History) provides enough "proof points" to effectively meet the Target Job requirements.
-        2. IF INSUFFICIENT DATA: Return a JSON object with "status": "needs_info" and "questions": ["question 1", "question 2"]. 
-           Ask max 3 questions. Focus on identifying missing skills or quantifiable achievements related to the job.
-        3. IF SUFFICIENT DATA: Return a JSON object with "status": "completed" and "customizedData": {
-              "bio": "Rewritten bio targeting the job",
-              "experience": [{"index": 0, "description": "Rewritten bullet points for this role"}],
-              "skills": ["Updated skill names/levels if relevant"]
-           }.
-        4. Return ONLY valid JSON.
+        1. STRATEGY: Analyze the Target Job for keywords, required tech stacks, and quantifiable goals. Map the Candidate's background (including ALL experience items and projects) to these requirements.
+        2. IF SUFFICIENT DATA (90% of the time): Return JSON "status": "completed". 
+           - MANDATORY: Rewrite the "bio" to be a punchy, 3-sentence Executive Summary tailored to this role.
+           - MANDATORY: For "experience", you MUST iterate through EVERY item provided in the profile. Rewrite the description bullet points to highlight skills and achievements relevant to the Target Job. Use the same "index" as provided.
+           - MANDATORY: For "skills", provide a fully optimized list of up to 12 skills (as strings) that match the job description's "Skills Required".
+        3. IF ABSOLUTELY ESSENTIAL DATA IS MISSING: Return JSON "status": "needs_info". 
+           - ONLY do this if there is zero overlap between the candidate's history and the job.
+           - Ask max 2 very specific questions.
+        
+        Return ONLY valid JSON in this exact format:
+        {
+          "status": "completed",
+          "questions": [],
+          "customizedData": { 
+            "bio": "...", 
+            "experience": [
+              { "index": 0, "description": "Professional bullet points tailored to job..." },
+              { "index": 1, "description": "..." }
+            ], 
+            "skills": ["Skill 1", "Skill 2", "..."] 
+          }
+        }
         `;
 
     const result = await model.generateContent(prompt);
