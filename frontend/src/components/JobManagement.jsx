@@ -3,7 +3,7 @@ import { FaTimes, FaBriefcase, FaMapMarkerAlt, FaCalendarAlt, FaStar, FaEye, FaC
 import PostJobForm from './PostJobForm';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
-import { updateJob as updateJobApi } from '../services/api';
+import { updateJob as updateJobApi, createJob as createJobApi, deleteJob as deleteJobApi, fetchRecruiterJobs } from '../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -24,13 +24,11 @@ const JobManagement = ({ onViewCV, onOpenChat }) => {
     if (!user) return;
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/jobs/me`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const result = await response.json();
+      const result = await fetchRecruiterJobs();
       if (result.success) {
         setJobs(result.data);
+      } else {
+        toast.error(result.error || 'Failed to load jobs');
       }
     } catch (error) {
       console.error('Error fetching jobs:', error);
@@ -48,14 +46,7 @@ const JobManagement = ({ onViewCV, onOpenChat }) => {
     if (!window.confirm('Are you sure you want to delete this job?')) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/jobs/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const result = await response.json();
+      const result = await deleteJobApi(id);
       if (result.success) {
         setJobs(jobs.filter(job => job._id !== id));
         toast.success('Job deleted successfully');
@@ -69,16 +60,7 @@ const JobManagement = ({ onViewCV, onOpenChat }) => {
 
   const handleAddJob = async (newJobData) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/jobs`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(newJobData)
-      });
-      const result = await response.json();
+      const result = await createJobApi(newJobData);
       if (result.success) {
         setJobs([result.data, ...jobs]);
         toast.success('Job posted successfully');

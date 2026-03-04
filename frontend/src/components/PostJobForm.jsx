@@ -94,16 +94,23 @@ const PostJobForm = ({ isOpen, onClose, onSubmit, editMode = false, existingJob 
     e.preventDefault();
     if (validateForm()) {
       if (editMode && existingJob) {
-        onSubmit({ ...formData });
+        // Send updated job data, but ensure _id and recruiter are handled by backend or properly passed
+        const { _id, recruiter, applicantsCount, postedDate, ...updateData } = formData;
+        onSubmit(updateData);
       } else {
-        const newJob = {
-          id: Date.now(),
-          ...formData,
-          applicants: existingJob?.applicants || 0,
-          status: 'Active',
-          postedDate: new Date().toISOString().split('T')[0]
+        // For new jobs, only send the core form data. 
+        // Backend handles recruiter ID, status, postedDate, and applicantsCount.
+        const { requirements, benefits, skills, ...rest } = formData;
+
+        // Ensure arrays don't have empty strings
+        const cleanedJob = {
+          ...rest,
+          requirements: requirements.filter(r => r.trim() !== ''),
+          benefits: benefits.filter(b => b.trim() !== ''),
+          skills: skills.filter(s => s.trim() !== '')
         };
-        onSubmit(newJob);
+
+        onSubmit(cleanedJob);
       }
       onClose();
       setFormData({

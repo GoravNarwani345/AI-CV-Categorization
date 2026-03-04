@@ -4,6 +4,8 @@ import { FaMapMarkerAlt, FaMoneyBill, FaBriefcase } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import { fetchJobs, fetchData, applyForJob } from '../services/api';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 const JobRecommendations = () => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);

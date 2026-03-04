@@ -75,12 +75,51 @@ export const updateProfile = async (profilePayload) => {
   }
 };
 
+export const createJob = async (jobPayload) => {
+  try {
+    const response = await fetch(`${API_URL}/jobs`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(jobPayload)
+    });
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
 export const updateJob = async (jobId, jobPayload) => {
   try {
     const response = await fetch(`${API_URL}/jobs/${jobId}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(jobPayload)
+    });
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+export const deleteJob = async (jobId) => {
+  try {
+    const response = await fetch(`${API_URL}/jobs/${jobId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+export const fetchRecruiterJobs = async () => {
+  try {
+    const response = await fetch(`${API_URL}/jobs/me`, {
+      headers: getAuthHeaders()
     });
     const result = await response.json();
     return result;
