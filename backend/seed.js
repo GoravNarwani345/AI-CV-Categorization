@@ -185,12 +185,82 @@ const seedData = async () => {
                 requirements: ['PM experience', 'Technical background', 'Agile/Scrum'],
                 skills: ['Project Management', 'Agile', 'Jira'],
                 postedDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+            },
+            {
+                recruiter: sarahHR._id,
+                title: 'Python Backend Developer',
+                company: 'Global Solutions',
+                location: 'Remote',
+                salary: '$110k - $140k',
+                description: 'Build scalable backend services using Python and FastAPI.',
+                requirements: ['Python expert', 'SQL knowledge', 'Cloud experience'],
+                skills: ['Python', 'FastAPI', 'PostgreSQL', 'Docker'],
+                postedDate: new Date()
+            },
+            {
+                recruiter: sarahHR._id,
+                title: 'AI Research Engineer',
+                company: 'Global Solutions',
+                location: 'San Francisco, CA',
+                salary: '$180k - $220k',
+                description: 'Develop and deploy state-of-the-art LLM applications.',
+                requirements: ['Strong ML background', 'PyTorch/TensorFlow', 'LLM experience'],
+                skills: ['Python', 'PyTorch', 'Machine Learning', 'NLP'],
+                postedDate: new Date()
+            },
+            {
+                recruiter: sarahHR._id,
+                title: 'Senior Web Application Developer',
+                company: 'Global Solutions',
+                location: 'Remote',
+                salary: '$130k - $160k',
+                description: 'Lead the development of our core SaaS web application.',
+                requirements: ['React expertise', 'Node.js backend', 'Cloud architecture'],
+                skills: ['React', 'Node.js', 'PostgreSQL', 'AWS'],
+                postedDate: new Date()
+            },
+            {
+                recruiter: sarahHR._id,
+                title: 'MLOps Engineer',
+                company: 'Global Solutions',
+                location: 'Hybrid',
+                salary: '$140k - $180k',
+                description: 'Manage production AI pipelines and deployment infrastructures.',
+                requirements: ['Kubernetes', 'CI/CD for ML', 'Python networking'],
+                skills: ['Docker', 'Kubernetes', 'MLFlow', 'Python'],
+                postedDate: new Date()
+            }
+        ];
+
+        const additionalJobs = [
+            {
+                recruiter: alexRecruiter._id,
+                title: 'React & Next.js Specialist',
+                company: 'Innovation Hub',
+                location: 'Remote',
+                salary: '$120k - $150k',
+                description: 'Focus on high-performance web applications using modern React frameworks.',
+                requirements: ['Next.js expert', 'Performance optimization', 'SEO knowledge'],
+                skills: ['Next.js', 'React', 'Tailwind', 'Vercel'],
+                postedDate: new Date()
+            },
+            {
+                recruiter: alexRecruiter._id,
+                title: 'Generative AI Developer',
+                company: 'Innovation Hub',
+                location: 'NYC / Remote',
+                salary: '$150k - $200k',
+                description: 'Integrate LLMs into consumer-facing web products.',
+                requirements: ['LangChain/LlamaIndex', 'API integration', 'Prompt engineering'],
+                skills: ['Python', 'OpenAI API', 'Vector Databases', 'React'],
+                postedDate: new Date()
             }
         ];
 
         const savedAlexJobs = await Job.insertMany(alexJobs);
         const savedSarahJobs = await Job.insertMany(sarahJobs);
-        const allJobs = [...savedAlexJobs, ...savedSarahJobs];
+        const savedAdditionalJobs = await Job.insertMany(additionalJobs);
+        const allJobs = [...savedAlexJobs, ...savedSarahJobs, ...savedAdditionalJobs];
 
         // 4. Create Applications (Testing various statuses)
         const apps = [

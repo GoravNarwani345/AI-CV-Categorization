@@ -102,6 +102,20 @@ const JobRecommendations = () => {
                   <span className="font-bold not-italic mr-1">🤖 AI match insight:</span>
                   "{job.reason}"
                 </p>
+                {(job.skillsFound || job.missingSkills) && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {job.skillsFound?.slice(0, 5).map((skill, sIdx) => (
+                      <span key={sIdx} className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">
+                        ✓ {skill}
+                      </span>
+                    ))}
+                    {job.missingSkills?.slice(0, 3).map((skill, sIdx) => (
+                      <span key={sIdx} className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-bold border border-red-100">
+                        + Missing: {skill}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

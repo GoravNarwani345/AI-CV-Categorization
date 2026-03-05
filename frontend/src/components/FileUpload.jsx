@@ -87,11 +87,11 @@ const FileUpload = ({ onUploadSuccess }) => {
       <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center hover:border-blue-400 transition-colors">
         <FaCloudUploadAlt size={60} className="text-blue-500 mb-4" />
         <p className="text-gray-700 font-medium mb-2">Drag & drop your CV here or click to browse</p>
-        <p className="text-gray-500 text-sm mb-4">Supported formats: PDF, DOC, DOCX (Max 10MB)</p>
+        <p className="text-gray-500 text-sm mb-4">Supported formats: PDF Only (Max 10MB)</p>
 
         <input
           type="file"
-          accept=".pdf,.doc,.docx"
+          accept=".pdf"
           onChange={handleFileChange}
           className="hidden"
           id="file-upload"

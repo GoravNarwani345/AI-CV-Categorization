@@ -115,6 +115,43 @@ const PrintableCV = forwardRef(({ profile, user }, ref) => {
                             </div>
                         </section>
                     )}
+
+                    {/* AI Skill Analysis (Matched & Gaps) - Optional display for tailored CVs */}
+                    {(profile.analysis) && (
+                        <section className="bg-slate-50/50 p-6 rounded-xl border border-slate-100 no-print">
+                            <h2 className="text-sm font-bold uppercase tracking-[0.15em] text-blue-900 mb-4 flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                                AI-Powered Matching Analysis
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <p className="text-[9pt] font-black text-emerald-600 uppercase tracking-widest mb-3">Matching Strengths</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {profile.analysis.matchedSkills?.map((skill, i) => (
+                                            <span key={i} className="text-xs bg-white text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-100 font-bold shadow-sm">
+                                                ✓ {skill}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                                {profile.analysis.missingSkills?.length > 0 && (
+                                    <div>
+                                        <p className="text-[9pt] font-black text-rose-600 uppercase tracking-widest mb-3">Identified Gaps</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {profile.analysis.missingSkills?.map((skill, i) => (
+                                                <span key={i} className="text-xs bg-white text-rose-700 px-3 py-1.5 rounded-lg border border-rose-100 font-bold shadow-sm">
+                                                    + {skill}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <p className="text-[8pt] text-slate-400 mt-4 italic">
+                                * This analysis is performed in real-time by AI to help you optimize your CV for current market demands.
+                            </p>
+                        </section>
+                    )}
                 </div>
 
                 {/* Footer */}

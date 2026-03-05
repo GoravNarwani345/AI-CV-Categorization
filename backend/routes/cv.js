@@ -19,12 +19,12 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-    const allowedTypes = ['.pdf', '.doc', '.docx'];
+    const allowedTypes = ['.pdf'];
     const ext = path.extname(file.originalname).toLowerCase();
     if (allowedTypes.includes(ext)) {
         cb(null, true);
     } else {
-        cb(new Error('Invalid file type. Only PDF and Word documents are allowed.'), false);
+        cb(new Error('Invalid file type. Only PDF documents are allowed for AI analysis.'), false);
     }
 };
 

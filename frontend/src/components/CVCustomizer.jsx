@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FaRobot, FaSave, FaCheckCircle, FaTrash, FaPlus, FaGraduationCap, FaBriefcase, FaCode, FaDownload, FaUser } from "react-icons/fa";
+import { FaRobot, FaSave, FaCheckCircle, FaTrash, FaPlus, FaGraduationCap, FaBriefcase, FaCode, FaDownload, FaUser, FaTimes, FaEye } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { useAuth } from "../contexts/AuthContext";
 import { useReactToPrint } from "react-to-print";
 import PrintableCV from "./PrintableCV";
+import SkillGapAnalysis from "./SkillGapAnalysis";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
@@ -24,10 +25,11 @@ const CVCustomizer = () => {
     const [isCustomizing, setIsCustomizing] = useState(false);
     const [aiQuestions, setAiQuestions] = useState([]);
     const [aiAnswers, setAiAnswers] = useState({});
-    const [conversation, setConversation] = useState([]);
+    const [skillAnalysis, setSkillAnalysis] = useState(null);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [history, setHistory] = useState([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+    const [showMobilePreview, setShowMobilePreview] = useState(false);
 
     const handleSmartCustomize = async (isResponding = false) => {
         setIsCustomizing(true);
@@ -79,6 +81,7 @@ const CVCustomizer = () => {
                         });
                     }
                     setProfileData(newData);
+                    setSkillAnalysis(customizedData.analysis || null);
                     setConversation([]);
                     toast.success("CV highly customized for the target job!");
                 }
@@ -124,6 +127,7 @@ const CVCustomizer = () => {
             cvUrl: version.cvUrl,
             cvFileName: version.cvFileName
         });
+        setSkillAnalysis(null); // Clear analysis on restore as it's for a specific job
         setIsHistoryOpen(false);
         toast.success("Version restored! Don't forget to save if you want to keep it.");
     };
@@ -266,6 +270,16 @@ const CVCustomizer = () => {
                                 </button>
                             </div>
                         </div>
+
+                        {/* AI Smart Targeting Analysis Result */}
+                        {skillAnalysis && (
+                            <SkillGapAnalysis
+                                isTargeted={true}
+                                user={profileData}
+                                matchedSkills={skillAnalysis.matchedSkills}
+                                missingSkills={skillAnalysis.missingSkills}
+                            />
+                        )}
 
                         {/* Professional Bio Section */}
                         <section className="space-y-4">
@@ -474,6 +488,48 @@ const CVCustomizer = () => {
                     </div>
                 </div>
             )}
+
+            {/* Mobile Preview Modal */}
+            {showMobilePreview && (
+                <div className="fixed inset-0 z-110 bg-black/60 backdrop-blur-md flex flex-col animate-in fade-in duration-300">
+                    <div className="bg-slate-900 p-4 text-white flex justify-between items-center shrink-0">
+                        <div className="flex items-center gap-3">
+                            <FaEye className="text-blue-400" />
+                            <h3 className="font-bold">CV Preview</h3>
+                        </div>
+                        <button
+                            onClick={() => setShowMobilePreview(false)}
+                            className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all"
+                        >
+                            <FaTimes />
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto bg-gray-100 p-4 scrollbar-hide">
+                        <div className="bg-white shadow-2xl mx-auto max-w-[210mm] min-h-screen">
+                            <PrintableCV profile={profileData} user={user} />
+                        </div>
+                    </div>
+                    <div className="p-4 bg-white border-t border-gray-100">
+                        <button
+                            onClick={() => {
+                                handlePrint();
+                                setShowMobilePreview(false);
+                            }}
+                            className="w-full bg-blue-600 text-white py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-100"
+                        >
+                            <FaDownload /> Download PDF
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Mobile Floating Preview Button */}
+            <button
+                onClick={() => setShowMobilePreview(true)}
+                className="lg:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
+            >
+                <FaEye size={24} />
+            </button>
 
             {/* Hidden printable CV for actual print engine */}
             <div className="absolute -top-[10000px] -left-[10000px]">

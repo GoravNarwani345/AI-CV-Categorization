@@ -35,6 +35,7 @@ router.get('/me', auth, async (req, res) => {
                     experience: profile.experience,
                     skills: profile.skills,
                     preferences: profile.preferences,
+                    history: profile.history,
                     cvUrl: profile.cvUrl,
                     cvFileName: profile.cvFileName,
                     cvUploadedAt: profile.cvUploadedAt
@@ -152,6 +153,7 @@ router.post('/login', async (req, res) => {
                     experience: profile.experience,
                     skills: profile.skills,
                     preferences: profile.preferences,
+                    history: profile.history,
                     cvUrl: profile.cvUrl,
                     cvFileName: profile.cvFileName,
                     cvUploadedAt: profile.cvUploadedAt
