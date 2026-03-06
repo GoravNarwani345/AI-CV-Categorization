@@ -180,7 +180,7 @@ const CandidateDashboard = () => {
       case "upload":
         return <FileUpload onUploadSuccess={handleUploadSuccess} />;
       case "jobs":
-        return <JobRecommendations />;
+        return <JobRecommendations onApplySuccess={() => setSelectedSection("applications")} />;
       case "applications":
         return <MyApplications />;
       case "skills":

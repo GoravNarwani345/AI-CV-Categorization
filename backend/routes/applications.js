@@ -126,14 +126,16 @@ router.put('/:id', auth, async (req, res) => {
             return res.status(403).json({ success: false, error: 'Access denied' });
         }
 
-        const { status } = req.body;
+        const { status, interviewDate } = req.body;
         const application = await Application.findById(req.params.id);
 
         if (!application) {
             return res.status(404).json({ success: false, error: 'Application not found' });
         }
 
-        application.status = status;
+        if (status) application.status = status;
+        if (interviewDate) application.interviewDate = interviewDate;
+
         await application.save();
 
         // Real-time Notification for Candidate

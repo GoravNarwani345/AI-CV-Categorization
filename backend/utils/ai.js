@@ -3,7 +3,7 @@ const pdf = require('pdf-parse');
 const fs = require('fs');
 const path = require('path');
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "AIzaSyANUmhMTjTG3nV5_5DuNGon7CCO0Kn7MMI");
 const MODEL_NAME = "gemini-2.5-flash";
 
 /**
@@ -11,18 +11,43 @@ const MODEL_NAME = "gemini-2.5-flash";
  */
 const parseAIResponse = (text) => {
   try {
+    // 1. Try strict parsing after removing markdown code blocks
     const jsonString = text.replace(/```json/g, "").replace(/```/g, "").trim();
     return JSON.parse(jsonString);
   } catch (parseError) {
-    console.error('❌ Failed to parse AI response as JSON:', text);
-    const start = text.indexOf('{');
-    const end = text.lastIndexOf('}');
-    if (start !== -1 && end !== -1) {
-      try {
-        return JSON.parse(text.substring(start, end + 1));
-      } catch (e) {
-        throw parseError;
+    console.error('⚠️ Initial JSON parse failed. Attempting robust repair.');
+    try {
+      // 2. Extract anything between the first { or [ and last } or ]
+      const firstCurly = text.indexOf('{');
+      const firstSquare = text.indexOf('[');
+      const lastCurly = text.lastIndexOf('}');
+      const lastSquare = text.lastIndexOf(']');
+
+      let startIdx = firstCurly;
+      let endIdx = lastCurly;
+
+      if (firstSquare !== -1 && (firstCurly === -1 || firstSquare < firstCurly)) {
+        startIdx = firstSquare;
       }
+      if (lastSquare !== -1 && (lastCurly === -1 || lastSquare > lastCurly)) {
+        endIdx = lastSquare;
+      }
+
+      if (startIdx !== -1 && endIdx !== -1 && endIdx >= startIdx) {
+        let extracted = text.substring(startIdx, endIdx + 1);
+
+        // 3. Attempt to fix common LLM JSON errors
+        extracted = extracted
+          .replace(/,\s*([}\]])/g, '$1') // Remove trailing commas
+          .replace(/([\{\s,])(\w+)\s*:/g, '$1"$2":') // Add missing quotes around keys
+          .replace(/\n/g, ' ') // Strip newlines that might break strings
+          .replace(/\\"/g, '"'); // Fix over-escaped quotes
+
+        return JSON.parse(extracted);
+      }
+    } catch (robustError) {
+      console.error('❌ Robust JSON parse completely failed:', text);
+      throw parseError; // Throw the original error
     }
     throw parseError;
   }
@@ -121,24 +146,28 @@ const rephraseText = async (text, context) => {
   }
 };
 
-const getJobMatches = async (profile, jobs) => {
+const getJobMatches = async (cvData, jobs) => {
   try {
     const model = genAI.getGenerativeModel({ model: MODEL_NAME });
 
-    const prompt = `
-        You are an AI matching engine. Compare the candidate's profile with the list of jobs provided.
-        Calculate a match percentage (0-100) based on how well the candidate's skills and experience fit each job's requirements.
-        Consider semantic similarity.
+    const isText = typeof cvData === 'string';
+    const candidateInfo = isText
+      ? `Raw CV Text:\n---\n${cvData}\n---`
+      : `Profile Data:\nBio: ${cvData.basicInfo?.bio}\nSkills: ${JSON.stringify(cvData.skills)}\nExperience: ${JSON.stringify(cvData.experience)}`;
 
-        Candidate Profile:
-        Skills: ${JSON.stringify(profile.skills)}
-        Experience: ${JSON.stringify(profile.experience)}
+    const prompt = `
+        You are an AI matching engine. Compare the candidate's background with the list of jobs provided.
+        Calculate a match percentage (0-100) based on how well the candidate's skills and experience fit each job's requirements.
+        Consider semantic similarity between the candidate's background and the job description.
+
+        Candidate Information:
+        ${candidateInfo}
 
         Jobs:
         ${jobs.map(j => `ID: ${j._id}, Title: ${j.title}, Requirements: ${JSON.stringify(j.skills)}, Description: ${j.description}`).join('\n\n')}
 
         Return ONLY a JSON array of objects: 
-        [{"candidateId": "...", "name": "...", "matchScore": 95, "matchReason": "Overall fit summary", "requirementsMatch": "..." }]
+        [{"jobId": "...", "matchScore": 95, "matchReason": "Overall fit summary", "requirementsMatch": "..." }]
         `;
 
     const result = await model.generateContent(prompt);
@@ -285,7 +314,7 @@ const getCustomizedCV = async (profile, jobInfo, conversation = []) => {
         ${jobInfo}
 
         CANDIDATE PROFILE:
-        Bio: ${profile.basicInfo.bio}
+        Bio: ${profile.basicInfo?.bio || 'N/A'}
         Experience: ${JSON.stringify(profile.experience)}
         Skills: ${JSON.stringify(profile.skills)}
         Education: ${JSON.stringify(profile.education)}
@@ -299,6 +328,7 @@ const getCustomizedCV = async (profile, jobInfo, conversation = []) => {
            - MANDATORY: Rewrite the "bio" to be a punchy, 3-sentence Executive Summary tailored to this role.
            - MANDATORY: For "experience", you MUST iterate through EVERY item provided in the profile. Rewrite the description bullet points to highlight skills and achievements relevant to the Target Job. Use the same "index" as provided.
            - MANDATORY: For "skills", provide a fully optimized list of up to 12 skills (as strings) that match the job description's "Skills Required".
+           - MANDATORY: For "skillGapAnalysis", compare the candidate's current skills against ALL skills explicitly required by the job. List which skills they already have ("matchedSkills") and which are missing ("missingSkills").
         3. IF ABSOLUTELY ESSENTIAL DATA IS MISSING: Return JSON "status": "needs_info". 
            - ONLY do this if there is zero overlap between the candidate's history and the job.
            - Ask max 2 very specific questions.
@@ -313,7 +343,11 @@ const getCustomizedCV = async (profile, jobInfo, conversation = []) => {
               { "index": 0, "description": "Professional bullet points tailored to job..." },
               { "index": 1, "description": "..." }
             ], 
-            "skills": ["Skill 1", "Skill 2", "..."] 
+            "skills": ["Skill 1", "Skill 2", "..."],
+            "skillGapAnalysis": {
+              "matchedSkills": ["skill the candidate already has that the job requires"],
+              "missingSkills": ["skill the job requires that the candidate lacks"]
+            }
           }
         }
         `;
@@ -327,12 +361,12 @@ const getCustomizedCV = async (profile, jobInfo, conversation = []) => {
   }
 };
 
-const getCareerTips = async (profile) => {
+const getCareerTips = async (cvText) => {
   try {
     const model = genAI.getGenerativeModel({ model: MODEL_NAME });
 
     const prompt = `
-        You are a senior career advisor. Based STRICTLY on the candidate's unique profile details below, provide:
+        You are a senior career advisor. Based STRICTLY on the candidate's raw CV text below, provide:
         1. 4 SPECIFIC, non-generic career tips/suggestions that leverage their existing experience and address their actual skill gaps.
         2. 3-4 recommended certificate courses that would logically be the next step for this specific professional journey.
 
@@ -344,10 +378,10 @@ const getCareerTips = async (profile) => {
           "courses": [{ "title": "...", "description": "...", "provider": "Coursera|Udemy|edX|Other", "type": "Free|Paid", "relevance": "Explain why this helps", "platformUrl": "https://..." }]
         }
         
-        Profile:
-        Experience: ${JSON.stringify(profile.experience)}
-        Skills: ${JSON.stringify(profile.skills)}
-        Education: ${JSON.stringify(profile.education)}
+        Candidate CV Text:
+        ---
+        ${cvText}
+        ---
     `;
 
     const result = await model.generateContent(prompt);

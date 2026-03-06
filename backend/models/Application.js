@@ -21,7 +21,10 @@ const applicationSchema = new mongoose.Schema({
         default: Date.now
     },
     notes: String,
-    resumeSnapshot: String // URL or path to the resume at the time of application
+    resumeSnapshot: String, // URL or path to the resume at the time of application
+    interviewDate: {
+        type: Date
+    }
 });
 
 // Ensure a candidate can only apply once per job

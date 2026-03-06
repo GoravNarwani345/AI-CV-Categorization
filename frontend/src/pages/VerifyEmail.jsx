@@ -57,7 +57,7 @@ const VerifyEmail = () => {
                         <h1 className="text-3xl font-bold text-gray-800">Verified!</h1>
                         <p className="text-gray-600">Your email has been successfully verified. You can now access all features.</p>
                         <Link
-                            to="/login"
+                            to="/getstarted"
                             className="inline-block w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100"
                         >
                             Go to Login
@@ -73,7 +73,7 @@ const VerifyEmail = () => {
                         <h1 className="text-3xl font-bold text-gray-800">Verification Failed</h1>
                         <p className="text-gray-600">The link may be expired or invalid. Please try resending the verification email.</p>
                         <Link
-                            to="/login"
+                            to="/getstarted"
                             className="inline-block w-full bg-gray-800 text-white font-bold py-3 rounded-xl hover:bg-gray-900 transition-all shadow-lg"
                         >
                             Back to Login

@@ -30,6 +30,7 @@ const CVCustomizer = () => {
     const [history, setHistory] = useState([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
     const [showMobilePreview, setShowMobilePreview] = useState(false);
+    const [conversation, setConversation] = useState([]);
 
     const handleSmartCustomize = async (isResponding = false) => {
         setIsCustomizing(true);
@@ -54,7 +55,8 @@ const CVCustomizer = () => {
                 },
                 body: JSON.stringify({
                     jobInfo: targetJob,
-                    conversation: updatedConversation
+                    conversation: updatedConversation,
+                    profileData: profileData  // send live editor state so AI uses latest data
                 })
             });
             const result = await res.json();
@@ -68,20 +70,27 @@ const CVCustomizer = () => {
                 } else if (status === "completed") {
                     // Update profile data with customized content
                     const newData = { ...profileData };
-                    if (customizedData.bio) newData.basicInfo.bio = customizedData.bio;
+                    if (customizedData.bio) newData.basicInfo = { ...newData.basicInfo, bio: customizedData.bio };
                     if (customizedData.skills) {
-                        // Merge or replace skills? Let's replace for high targeting
                         newData.skills = customizedData.skills.map(s => typeof s === 'string' ? { name: s, level: 'Advanced' } : s);
                     }
                     if (customizedData.experience) {
                         customizedData.experience.forEach(exp => {
                             if (newData.experience[exp.index]) {
-                                newData.experience[exp.index].description = exp.description;
+                                // AI may return description as an array of bullet strings — normalize to plain text
+                                newData.experience[exp.index].description = Array.isArray(exp.description)
+                                    ? exp.description.join('\n')
+                                    : (exp.description || '');
                             }
                         });
                     }
                     setProfileData(newData);
-                    setSkillAnalysis(customizedData.analysis || null);
+
+                    // Wire up SkillGapAnalysis with real matched/missing skills from AI
+                    if (customizedData.skillGapAnalysis) {
+                        setSkillAnalysis(customizedData.skillGapAnalysis);
+                    }
+
                     setConversation([]);
                     toast.success("CV highly customized for the target job!");
                 }

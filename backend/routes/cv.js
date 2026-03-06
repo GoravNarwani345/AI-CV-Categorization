@@ -219,19 +219,26 @@ router.post('/rephrase', auth, async (req, res) => {
 // AI Customize CV for Job
 router.post('/customize', auth, async (req, res) => {
     try {
-        const { jobInfo, conversation } = req.body;
+        const { jobInfo, conversation, profileData: clientProfileData } = req.body;
 
         if (!jobInfo) {
             return res.status(400).json({ success: false, error: 'Job Information is required' });
         }
 
-        const profile = await Profile.findOne({ user: req.user.id });
-        if (!profile) {
-            return res.status(404).json({ success: false, error: 'Profile not found' });
+        // Use live profileData from frontend if sent (user may have unsaved edits).
+        // Fall back to DB profile if not provided.
+        let profileForAI;
+        if (clientProfileData) {
+            profileForAI = clientProfileData;
+        } else {
+            profileForAI = await Profile.findOne({ user: req.user.id });
+            if (!profileForAI) {
+                return res.status(404).json({ success: false, error: 'Profile not found' });
+            }
         }
 
         const { getCustomizedCV } = require('../utils/ai');
-        const result = await getCustomizedCV(profile, jobInfo, conversation || []);
+        const result = await getCustomizedCV(profileForAI, jobInfo, conversation || []);
 
         res.json({
             success: true,

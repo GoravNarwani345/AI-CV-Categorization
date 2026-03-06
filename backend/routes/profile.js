@@ -35,10 +35,19 @@ router.put('/me', auth, async (req, res) => {
     try {
         const { name, basicInfo, education, experience, skills, recruiterInfo, preferences, onboardingCompleted } = req.body;
 
+        // Sanitize experience: AI sometimes returns description as an array of bullet strings.
+        // Mongoose schema expects a plain String, so we join arrays before saving.
+        const sanitizedExperience = (experience || []).map(exp => ({
+            ...exp,
+            description: Array.isArray(exp.description)
+                ? exp.description.join('\n')
+                : (exp.description || '')
+        }));
+
         const profileFields = {
             basicInfo,
             education,
-            experience,
+            experience: sanitizedExperience,
             skills,
             recruiterInfo,
             preferences,
@@ -111,23 +120,36 @@ router.get('/user/:userId', auth, async (req, res) => {
 });
 
 // @route   GET /api/profiles/career-tips
-// @desc    Get AI-generated career tips based on profile
+// @desc    Get AI-generated career tips based on CV
 // @access  Private
 router.get('/career-tips', auth, async (req, res) => {
     try {
         const profile = await Profile.findOne({ user: req.user.id });
-        if (!profile || (profile.skills.length === 0 && profile.experience.length === 0)) {
+        if (!profile || !profile.cvUrl) {
             return res.json({
                 success: true,
                 data: {
-                    tips: [{ title: "Complete Your Profile", description: "Upload your CV or manually add skills and experience to get AI career suggestions.", iconType: "lightbulb" }],
+                    tips: [{ title: "Upload Your CV", description: "Upload your CV to get AI career suggestions.", iconType: "lightbulb" }],
                     courses: []
                 }
             });
         }
 
+        const fs = require('fs');
+        const path = require('path');
+        const pdf = require('pdf-parse');
+
+        const filePath = path.join(__dirname, '..', profile.cvUrl);
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ success: false, error: 'CV file not found on server' });
+        }
+
+        const dataBuffer = fs.readFileSync(filePath);
+        const pdfData = await pdf(dataBuffer);
+        const cvText = pdfData.text;
+
         const { getCareerTips } = require('../utils/ai');
-        const careerData = await getCareerTips(profile);
+        const careerData = await getCareerTips(cvText);
 
         res.json({ success: true, data: careerData });
     } catch (error) {

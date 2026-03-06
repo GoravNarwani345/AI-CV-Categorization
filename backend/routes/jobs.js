@@ -97,14 +97,14 @@ router.delete('/:id', auth, async (req, res) => {
     }
 });
 
-// @route   POST /api/jobs/match
-// @desc    Get semantic match score for a candidate profile against jobs
+// @route   GET /api/jobs/match
+// @desc    Get semantic match score for a candidate's CV against jobs
 // @access  Private
 router.get('/match', auth, async (req, res) => {
     try {
         const profile = await Profile.findOne({ user: req.user.id });
-        if (!profile) {
-            return res.status(404).json({ success: false, error: 'Profile not found' });
+        if (!profile || !profile.cvUrl) {
+            return res.status(404).json({ success: false, error: 'No CV uploaded. Please upload a CV first.' });
         }
 
         const jobs = await Job.find({ status: 'Active' });
@@ -113,7 +113,28 @@ router.get('/match', auth, async (req, res) => {
         }
 
         const { getJobMatches } = require('../utils/ai');
-        const matches = await getJobMatches(profile, jobs);
+
+        // Prefer structured profile data (updated by editor) over raw disk text
+        const hasStructuredData = profile.skills?.length > 0 || profile.experience?.length > 0;
+        let matches;
+
+        if (hasStructuredData) {
+            matches = await getJobMatches(profile, jobs);
+        } else {
+            // Read and parse the CV file directly as fallback
+            const fs = require('fs');
+            const path = require('path');
+            const pdf = require('pdf-parse');
+
+            const filePath = path.join(__dirname, '..', profile.cvUrl);
+            if (!fs.existsSync(filePath)) {
+                return res.status(404).json({ success: false, error: 'CV file not found on server' });
+            }
+
+            const dataBuffer = fs.readFileSync(filePath);
+            const pdfData = await pdf(dataBuffer);
+            matches = await getJobMatches(pdfData.text, jobs);
+        }
 
         res.json({ success: true, data: matches });
     } catch (err) {

@@ -27,7 +27,7 @@ const ResetPassword = () => {
             const result = await response.json();
             if (result.success) {
                 toast.success("Password reset successful!");
-                navigate('/login');
+                navigate('/getstarted');
             } else {
                 toast.error(result.error || "Reset failed");
             }

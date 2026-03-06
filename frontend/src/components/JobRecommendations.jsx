@@ -6,7 +6,7 @@ import { fetchJobs, fetchData, applyForJob } from '../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-const JobRecommendations = () => {
+const JobRecommendations = ({ onApplySuccess }) => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
@@ -58,6 +58,7 @@ const JobRecommendations = () => {
       const result = await applyForJob(jobId);
       if (result.success) {
         toast.success("Application submitted successfully!");
+        if (onApplySuccess) onApplySuccess();
       } else {
         toast.error(result.error || "Application failed");
       }
@@ -80,63 +81,45 @@ const JobRecommendations = () => {
         <span className="bg-blue-600 w-2 h-8 rounded-full"></span>
         AI-Recommended Jobs
       </h2>
-      <div className="space-y-6">
-        {jobs.length > 0 ? jobs.map((job, index) => (
-          <div key={index} className="group border border-gray-100 rounded-xl p-6 hover:shadow-xl hover:shadow-blue-50 transition-all duration-300 bg-gray-50/30 hover:bg-white border-l-4 border-l-transparent hover:border-l-blue-500">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {jobs.length > 0 ? jobs.sort((a, b) => b.score - a.score).map((job, index) => (
+          <div key={index} className="group border border-gray-100 rounded-2xl p-6 hover:shadow-2xl hover:shadow-blue-100/50 transition-all duration-500 bg-white/50 backdrop-blur-sm hover:bg-white border-l-4 border-l-transparent hover:border-l-blue-500 flex flex-col">
             <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors">{job.title}</h3>
-                <p className="text-gray-600 font-medium">{job.company}</p>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors truncate">{job.title}</h3>
+                <p className="text-sm text-gray-600 font-medium truncate">{job.company}</p>
               </div>
-              <div className="flex flex-col items-end">
-                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold shadow-sm shadow-green-100/50">
-                  {job.match} Match
+              <div className="flex flex-col items-end ml-2">
+                <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-[10px] font-bold border border-blue-100 whitespace-nowrap">
+                  {job.match}
                 </span>
               </div>
             </div>
 
             {/* AI Reasoning Section */}
             {job.reason && (
-              <div className="mb-4 p-3 bg-blue-50/50 rounded-lg border border-blue-100/50">
-                <p className="text-xs text-blue-700 leading-relaxed italic">
-                  <span className="font-bold not-italic mr-1">🤖 AI match insight:</span>
+              <div className="mb-4 p-3 bg-blue-50/30 rounded-xl border border-blue-100/30 flex-1">
+                <p className="text-[11px] text-blue-700 leading-relaxed italic line-clamp-3">
+                  <span className="font-bold not-italic mr-1">🤖 AI:</span>
                   "{job.reason}"
                 </p>
-                {(job.skillsFound || job.missingSkills) && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {job.skillsFound?.slice(0, 5).map((skill, sIdx) => (
-                      <span key={sIdx} className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">
-                        ✓ {skill}
-                      </span>
-                    ))}
-                    {job.missingSkills?.slice(0, 3).map((skill, sIdx) => (
-                      <span key={sIdx} className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-bold border border-red-100">
-                        + Missing: {skill}
-                      </span>
-                    ))}
-                  </div>
-                )}
               </div>
             )}
 
-            <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 mb-4 opacity-70 group-hover:opacity-100 transition-opacity">
-              <div className="flex items-center gap-1.5 px-2 py-1 bg-white rounded-md border border-gray-100">
-                <FaMapMarkerAlt className="text-blue-500" />
+            <div className="flex flex-wrap items-center gap-2 text-[10px] text-gray-500 mb-4 opacity-70 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-1 px-2 py-1 bg-gray-50 rounded-md border border-gray-100">
+                <FaMapMarkerAlt className="text-blue-400" />
                 <span>{job.location || 'Remote'}</span>
               </div>
-              <div className="flex items-center gap-1.5 px-2 py-1 bg-white rounded-md border border-gray-100">
-                <FaMoneyBill className="text-green-500" />
+              <div className="flex items-center gap-1 px-2 py-1 bg-gray-50 rounded-md border border-gray-100">
+                <FaMoneyBill className="text-green-400" />
                 <span>{job.salary || 'Competitive'}</span>
               </div>
-              <div className="flex items-center gap-1.5 px-2 py-1 bg-white rounded-md border border-gray-100">
-                <FaBriefcase className="text-purple-500" />
-                <span>{job.type}</span>
-              </div>
             </div>
-            <p className="text-gray-700 mb-6 line-clamp-2 text-sm leading-relaxed">{job.description}</p>
+
             <button
               onClick={() => handleApply(job._id)}
-              className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 active:scale-[0.98] group-hover:scale-[1.01]"
+              className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 active:scale-[0.98] mt-auto"
             >
               Apply Now
             </button>
@@ -144,7 +127,7 @@ const JobRecommendations = () => {
         )) : (
           <div className="text-center py-12 border-2 border-dashed border-gray-100 rounded-2xl">
             <div className="text-4xl mb-3">🚀</div>
-            <p className="text-gray-500 font-medium">Complete your profile to unlock laser-focused job recommendations!</p>
+            <p className="text-gray-500 font-medium">Upload your CV to unlock laser-focused job recommendations!</p>
           </div>
         )}
       </div>
