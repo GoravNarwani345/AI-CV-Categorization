@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FaSync, FaRobot } from 'react-icons/fa';
 import RecruiterSidebar from '../components/RecruiterSidebar';
 import TopBar from '../components/TopBar';
 import CandidateCard from '../components/CandidateCard';
@@ -9,6 +10,7 @@ import Messaging from '../components/Messaging';
 import RecruiterProfile from '../components/RecruiterProfile';
 import { fetchAllProfiles } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
+import { useSocket } from "../contexts/SocketContext";
 import ChatPopup from '../components/ChatPopup';
 import CVViewerModal from '../components/CVViewerModal';
 import { toast } from 'react-toastify';
@@ -17,13 +19,18 @@ const RecruiterDashboard = () => {
   const [selectedSection, setSelectedSection] = useState('candidates');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { user: userData, loading: authLoading } = useAuth();
+  const { applicationUpdate, clearApplicationUpdate } = useSocket();
   const [candidates, setCandidates] = useState([]);
   const [candidatesLoading, setCandidatesLoading] = useState(true);
   const [openConversationId, setOpenConversationId] = useState(null);
   const [skillFilter, setSkillFilter] = useState('All Skills');
   const [statusFilter, setStatusFilter] = useState('All Candidates');
+  const [jobFilter, setJobFilter] = useState('All Jobs');
   const [searchTerm, setSearchTerm] = useState('');
   const [applications, setApplications] = useState([]);
+  const [jobs, setJobs] = useState([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [autoShortlistLoading, setAutoShortlistLoading] = useState(false);
 
   // CV Viewer State
   const [isCVModalOpen, setIsCVModalOpen] = useState(false);
@@ -44,6 +51,7 @@ const RecruiterDashboard = () => {
     if (authLoading || !userData) return;
 
     try {
+      setIsRefreshing(true);
       setCandidatesLoading(true);
       const token = localStorage.getItem('token');
       const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -59,6 +67,7 @@ const RecruiterDashboard = () => {
       }
 
       const recruiterJobs = jobsRes.data || [];
+      setJobs(recruiterJobs);
 
       // 2. For each job, fetch its applications
       const appsPromises = recruiterJobs.map(job =>
@@ -72,18 +81,28 @@ const RecruiterDashboard = () => {
       // Flatten all applications into a single list
       const allApplications = [];
       const appMapByUserId = {}; // To track statuses for the candidate pool view
+      const appMapByUserIdAndJob = {}; // Track applications by user and job
 
-      appsResults.forEach(res => {
+      appsResults.forEach((res, idx) => {
         if (res.success && res.data) {
           res.data.forEach(app => {
             allApplications.push(app);
             const userId = app.candidate?._id || app.candidate;
+            const jobId = recruiterJobs[idx]._id;
+            
             // Store application metadata for the card
             appMapByUserId[userId] = {
               status: app.status,
               id: app._id,
-              interviewDate: app.interviewDate
+              interviewDate: app.interviewDate,
+              jobId: jobId
             };
+            
+            // Track by user and job for filtering
+            if (!appMapByUserIdAndJob[userId]) {
+              appMapByUserIdAndJob[userId] = [];
+            }
+            appMapByUserIdAndJob[userId].push(jobId.toString());
           });
         }
       });
@@ -95,7 +114,11 @@ const RecruiterDashboard = () => {
 
       if (profilesRes.success) {
         const candidateList = profilesRes.data
-          .filter(p => p.user && p.user.role === 'candidate')
+          .filter(p => {
+            const userId = p.user?._id || p.user?.uid;
+            // Only show candidates who have applied to at least one of this recruiter's jobs
+            return p.user && p.user.role === 'candidate' && appMapByUserIdAndJob[userId];
+          })
           .map((profile) => {
             const userId = profile.user?._id || profile.user?.uid;
             const appInfo = appMapByUserId[userId] || {};
@@ -113,7 +136,8 @@ const RecruiterDashboard = () => {
               cvUrl: profile.cvUrl,
               status: appInfo.status || 'Applied',
               applicationId: appInfo.id,
-              interviewDate: appInfo.interviewDate
+              interviewDate: appInfo.interviewDate,
+              appliedJobs: appMapByUserIdAndJob[userId] || []
             };
           });
         setCandidates(candidateList);
@@ -123,6 +147,7 @@ const RecruiterDashboard = () => {
       toast.error("Error loading dashboard data");
     } finally {
       setCandidatesLoading(false);
+      setIsRefreshing(false);
     }
   }, [userData, authLoading]);
 
@@ -130,16 +155,53 @@ const RecruiterDashboard = () => {
     loadData();
   }, [loadData]);
 
+  // Listen for real-time application updates
+  useEffect(() => {
+    if (applicationUpdate) {
+      console.log('Recruiter received application update:', applicationUpdate);
+      loadData();
+      clearApplicationUpdate();
+    }
+  }, [applicationUpdate, clearApplicationUpdate, loadData]);
+
+  const handleAutoShortlist = async (jobId) => {
+    try {
+      setAutoShortlistLoading(true);
+      const token = localStorage.getItem('token');
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${API_BASE_URL}/applications/job/${jobId}/auto-shortlist`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const result = await response.json();
+      if (result.success) {
+        toast.success(result.message || 'Candidates auto-shortlisted!');
+        loadData();
+      } else {
+        toast.error(result.error || 'Failed to auto-shortlist');
+      }
+    } catch (error) {
+      toast.error('Failed to auto-shortlist candidates');
+    } finally {
+      setAutoShortlistLoading(false);
+    }
+  };
+
   // Derive unique skills from all candidates for filter options
   const allSkills = ['All Skills', ...new Set(candidates.flatMap(c => c.skills))];
 
   // Apply filters
   const filteredCandidates = candidates.filter(candidate => {
+    // Ensure candidate has applied to at least one job
+    const hasAppliedToJobs = candidate.appliedJobs && candidate.appliedJobs.length > 0;
+    if (!hasAppliedToJobs) return false;
+    
     const matchesSkill = skillFilter === 'All Skills' || candidate.skills.includes(skillFilter);
     const matchesStatus = statusFilter === 'All Candidates' || candidate.status === statusFilter;
+    const matchesJob = jobFilter === 'All Jobs' || candidate.appliedJobs.includes(jobFilter);
     const matchesSearch = candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       candidate.skills.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()));
-    return matchesSkill && matchesStatus && matchesSearch;
+    return matchesSkill && matchesStatus && matchesJob && matchesSearch;
   });
 
   const renderContent = () => {
@@ -151,7 +213,39 @@ const RecruiterDashboard = () => {
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-gray-800">Candidate Pool</h2>
-              <div className="flex gap-4">
+              <div className="flex gap-4 flex-wrap items-center">
+                <button
+                  onClick={loadData}
+                  disabled={isRefreshing}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                  title="Refresh candidates"
+                >
+                  <FaSync className={isRefreshing ? 'animate-spin' : ''} />
+                  Refresh
+                </button>
+                {jobFilter !== 'All Jobs' && (
+                  <button
+                    onClick={() => handleAutoShortlist(jobFilter)}
+                    disabled={autoShortlistLoading}
+                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition disabled:opacity-50"
+                    title="AI auto-shortlist candidates for this job"
+                  >
+                    {autoShortlistLoading ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : <FaRobot />}
+                    AI Auto-Shortlist
+                  </button>
+                )}
+                <select
+                  className="bg-white border border-gray-200 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                  value={jobFilter}
+                  onChange={(e) => setJobFilter(e.target.value)}
+                >
+                  <option value="All Jobs">All Jobs</option>
+                  {jobs.map(job => (
+                    <option key={job._id} value={job._id}>{job.title}</option>
+                  ))}
+                </select>
                 <select
                   className="bg-white border border-gray-200 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                   value={skillFilter}

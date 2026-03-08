@@ -1,32 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import { FaBriefcase, FaClock, FaCheckCircle, FaTimesCircle, FaHourglassHalf } from 'react-icons/fa';
+import { FaBriefcase, FaClock, FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaCalendarAlt } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { fetchApplications } from '../services/api';
+import { useSocket } from '../contexts/SocketContext';
 
 const MyApplications = () => {
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
+    const { applicationUpdate, clearApplicationUpdate } = useSocket();
+
+    const getApplications = async () => {
+        try {
+            setLoading(true);
+            const result = await fetchApplications();
+            if (result.success) {
+                setApplications(result.data);
+            } else {
+                toast.error(result.error || "Failed to load applications");
+            }
+        } catch (error) {
+            console.error('Error fetching applications:', error);
+            toast.error("An error occurred while loading applications");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const getApplications = async () => {
-            try {
-                setLoading(true);
-                const result = await fetchApplications();
-                if (result.success) {
-                    setApplications(result.data);
-                } else {
-                    toast.error(result.error || "Failed to load applications");
-                }
-            } catch (error) {
-                console.error('Error fetching applications:', error);
-                toast.error("An error occurred while loading applications");
-            } finally {
-                setLoading(false);
-            }
-        };
-
         getApplications();
     }, []);
+
+    // Listen for real-time application status updates
+    useEffect(() => {
+        if (applicationUpdate) {
+            console.log('Received application update:', applicationUpdate);
+            getApplications();
+            clearApplicationUpdate();
+        }
+    }, [applicationUpdate, clearApplicationUpdate]);
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -66,6 +77,7 @@ const MyApplications = () => {
                                 <th className="py-4 font-semibold text-gray-700">Company</th>
                                 <th className="py-4 font-semibold text-gray-700">Date Applied</th>
                                 <th className="py-4 font-semibold text-gray-700">Status</th>
+                                <th className="py-4 font-semibold text-gray-700">Interview</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -84,6 +96,23 @@ const MyApplications = () => {
                                             {getStatusIcon(app.status)}
                                             {app.status}
                                         </span>
+                                    </td>
+                                    <td className="py-4">
+                                        {app.interviewDate ? (
+                                            <div className="flex items-center gap-2 text-sm">
+                                                <FaCalendarAlt className="text-purple-600" />
+                                                <div>
+                                                    <div className="font-medium text-gray-800">
+                                                        {new Date(app.interviewDate).toLocaleDateString()}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500">
+                                                        {new Date(app.interviewDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <span className="text-gray-400 text-sm italic">Not scheduled</span>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

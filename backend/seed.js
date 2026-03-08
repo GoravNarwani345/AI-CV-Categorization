@@ -46,6 +46,24 @@ const seedData = async () => {
             onboardingCompleted: true
         });
 
+        const saraRecruiter = await User.create({
+            name: 'Sara',
+            email: 'sara@example.com',
+            password: 'password123',
+            role: 'recruiter',
+            isVerified: true,
+            onboardingCompleted: true
+        });
+
+        const zebistRecruiter = await User.create({
+            name: 'Zebist Recruiter',
+            email: 'zebist@example.com',
+            password: 'password123',
+            role: 'recruiter',
+            isVerified: true,
+            onboardingCompleted: true
+        });
+
         await Profile.create([
             {
                 user: alexRecruiter._id,
@@ -65,6 +83,26 @@ const seedData = async () => {
                     companySize: '1000+ employees',
                     website: 'https://globalsolutions.com',
                     companyDescription: 'Large scale enterprise consulting and staffing.'
+                }
+            },
+            {
+                user: saraRecruiter._id,
+                recruiterInfo: {
+                    companyName: 'TechCorp',
+                    industry: 'Technology',
+                    companySize: '500-1000 employees',
+                    website: 'https://techcorp.com',
+                    companyDescription: 'Leading technology company specializing in software solutions.'
+                }
+            },
+            {
+                user: zebistRecruiter._id,
+                recruiterInfo: {
+                    companyName: 'Zebist University Pakistan',
+                    industry: 'Education',
+                    companySize: '1000+ employees',
+                    website: 'https://zebist.edu.pk',
+                    companyDescription: 'Leading university in Pakistan offering quality education and research opportunities.'
                 }
             }
         ]);
@@ -257,10 +295,62 @@ const seedData = async () => {
             }
         ];
 
+        const zebistJobs = [
+            {
+                recruiter: zebistRecruiter._id,
+                title: 'Assistant Professor - Computer Science',
+                company: 'Zebist University Pakistan',
+                location: 'Lahore, Pakistan',
+                salary: 'PKR 150k - 200k/month',
+                description: 'Teaching and research position in Computer Science department.',
+                requirements: ['PhD in Computer Science', 'Research publications', 'Teaching experience'],
+                skills: ['Computer Science', 'Research', 'Teaching', 'Machine Learning'],
+                postedDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
+            },
+            {
+                recruiter: zebistRecruiter._id,
+                title: 'Lecturer - Software Engineering',
+                company: 'Zebist University Pakistan',
+                location: 'Karachi, Pakistan',
+                salary: 'PKR 120k - 160k/month',
+                description: 'Teach undergraduate courses in software engineering and web development.',
+                requirements: ['Masters in CS/SE', 'Industry experience', 'Good communication skills'],
+                skills: ['Software Engineering', 'Web Development', 'Teaching', 'React'],
+                postedDate: new Date()
+            }
+        ];
+
+        const saraJobs = [
+            {
+                recruiter: saraRecruiter._id,
+                title: 'Full Stack Developer',
+                company: 'TechCorp',
+                location: 'Remote',
+                salary: '$100k - $130k',
+                description: 'Build modern web applications using React and Node.js.',
+                requirements: ['React experience', 'Node.js backend', '2+ years experience'],
+                skills: ['React', 'Node.js', 'MongoDB', 'TypeScript'],
+                postedDate: new Date()
+            },
+            {
+                recruiter: saraRecruiter._id,
+                title: 'Senior Software Engineer',
+                company: 'TechCorp',
+                location: 'San Francisco, CA',
+                salary: '$150k - $180k',
+                description: 'Lead development of scalable microservices architecture.',
+                requirements: ['5+ years experience', 'Microservices', 'Cloud platforms'],
+                skills: ['Node.js', 'Python', 'AWS', 'Docker', 'Kubernetes'],
+                postedDate: new Date()
+            }
+        ];
+
         const savedAlexJobs = await Job.insertMany(alexJobs);
         const savedSarahJobs = await Job.insertMany(sarahJobs);
+        const savedSaraJobs = await Job.insertMany(saraJobs);
         const savedAdditionalJobs = await Job.insertMany(additionalJobs);
-        const allJobs = [...savedAlexJobs, ...savedSarahJobs, ...savedAdditionalJobs];
+        const savedZebistJobs = await Job.insertMany(zebistJobs);
+        const allJobs = [...savedAlexJobs, ...savedSarahJobs, ...savedSaraJobs, ...savedAdditionalJobs, ...savedZebistJobs];
 
         // 4. Create Applications (Testing various statuses)
         const apps = [
@@ -269,7 +359,17 @@ const seedData = async () => {
             { candidate: candidates[1]._id, job: savedAlexJobs[1]._id, status: 'Applied', appliedDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) },
             { candidate: candidates[3]._id, job: savedAlexJobs[1]._id, status: 'Rejected', appliedDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) },
             { candidate: candidates[4]._id, job: savedAlexJobs[0]._id, status: 'Applied', appliedDate: new Date() },
-            { candidate: candidates[0]._id, job: savedSarahJobs[0]._id, status: 'Applied', appliedDate: new Date() }
+            // Sarah Chen applies to Sarah HR's job
+            { candidate: candidates[0]._id, job: savedSarahJobs[0]._id, status: 'Applied', appliedDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) },
+            { candidate: candidates[0]._id, job: savedSarahJobs[3]._id, status: 'Applied', appliedDate: new Date() },
+            // Kuldip (1 year exp) applies to Zebist Lecturer job
+            { candidate: candidates[3]._id, job: savedZebistJobs[1]._id, status: 'Applied', appliedDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) },
+            // John (fresher) applies to Zebist Lecturer job
+            { candidate: candidates[4]._id, job: savedZebistJobs[1]._id, status: 'Shortlisted', appliedDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) },
+            // Applications to Sara's jobs
+            { candidate: candidates[0]._id, job: savedSaraJobs[0]._id, status: 'Applied', appliedDate: new Date() },
+            { candidate: candidates[1]._id, job: savedSaraJobs[0]._id, status: 'Applied', appliedDate: new Date() },
+            { candidate: candidates[2]._id, job: savedSaraJobs[1]._id, status: 'Applied', appliedDate: new Date() }
         ];
         await Application.insertMany(apps);
 
@@ -283,12 +383,24 @@ const seedData = async () => {
         conv.lastMessage = lastMsg._id;
         await conv.save();
 
-        // 6. Create Notifications
+        // 6. Create Notifications (with clear applicant names)
         await Notification.insertMany([
             { recipient: alexRecruiter._id, sender: candidates[4]._id, type: 'application', content: 'John Doe applied for Senior Frontend Engineer', link: '/recruiter/jobs' },
             { recipient: candidates[0]._id, sender: alexRecruiter._id, type: 'status_update', content: 'Your application for Senior Frontend Engineer was updated to Shortlisted', link: '/candidate/applications' },
             { recipient: candidates[2]._id, sender: alexRecruiter._id, type: 'status_update', content: 'Interview scheduled for UI Designer role.', link: '/candidate/applications' },
-            { recipient: candidates[0]._id, sender: alexRecruiter._id, type: 'message', content: 'Alex Johnson sent you a new message.', link: '/candidate/messages' }
+            { recipient: candidates[0]._id, sender: alexRecruiter._id, type: 'message', content: 'Alex Johnson sent you a new message.', link: '/candidate/messages' },
+            // Sarah HR receives notification from Sarah Chen
+            { recipient: sarahHR._id, sender: candidates[0]._id, type: 'application', content: 'Sarah Chen applied for Technical Project Manager', link: '/recruiter/jobs' },
+            { recipient: sarahHR._id, sender: candidates[0]._id, type: 'application', content: 'Sarah Chen applied for Senior Web Application Developer', link: '/recruiter/jobs' },
+            // Zebist receives notifications from Kuldip and John
+            { recipient: zebistRecruiter._id, sender: candidates[3]._id, type: 'application', content: 'Kuldip Singh applied for Lecturer - Software Engineering', link: '/recruiter/jobs' },
+            { recipient: zebistRecruiter._id, sender: candidates[4]._id, type: 'application', content: 'John Doe applied for Lecturer - Software Engineering', link: '/recruiter/jobs' },
+            // John receives status update from Zebist
+            { recipient: candidates[4]._id, sender: zebistRecruiter._id, type: 'status_update', content: 'Your application for Lecturer - Software Engineering was updated to Shortlisted', link: '/candidate/applications' },
+            // Sara receives notifications
+            { recipient: saraRecruiter._id, sender: candidates[0]._id, type: 'application', content: 'Sarah Chen applied for Full Stack Developer', link: '/recruiter/jobs' },
+            { recipient: saraRecruiter._id, sender: candidates[1]._id, type: 'application', content: 'Marcus Miller applied for Full Stack Developer', link: '/recruiter/jobs' },
+            { recipient: saraRecruiter._id, sender: candidates[2]._id, type: 'application', content: 'Elena Rodriguez applied for Senior Software Engineer', link: '/recruiter/jobs' }
         ]);
 
         console.log('✨ Database fully seeded with multi-recruiter, multi-status, and deep candidate data!');

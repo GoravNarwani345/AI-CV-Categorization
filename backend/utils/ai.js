@@ -393,6 +393,47 @@ const getCareerTips = async (cvText) => {
   }
 };
 
+const autoShortlistCandidates = async (job, applications) => {
+  try {
+    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+
+    const prompt = `
+        You are an AI recruiter. Analyze all applications for this job and automatically shortlist the best candidates.
+        
+        Job Details:
+        Title: ${job.title}
+        Description: ${job.description}
+        Skills Required: ${JSON.stringify(job.skills)}
+        Requirements: ${JSON.stringify(job.requirements)}
+
+        Applications:
+        ${applications.map(app => `
+            Application ID: ${app._id}
+            Candidate: ${app.candidateProfile?.user?.name}
+            Skills: ${JSON.stringify(app.candidateProfile?.skills)}
+            Experience: ${JSON.stringify(app.candidateProfile?.experience)}
+            Education: ${JSON.stringify(app.candidateProfile?.education)}
+        `).join('\n')}
+
+        Evaluate each candidate and decide if they should be "Shortlisted" or remain "Applied".
+        Only shortlist candidates with 70%+ match to requirements.
+        
+        Return ONLY a JSON array:
+        [
+            { "applicationId": "...", "status": "Shortlisted", "reason": "Brief reason" },
+            { "applicationId": "...", "status": "Applied", "reason": "Brief reason" }
+        ]
+        `;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return parseAIResponse(response.text());
+  } catch (error) {
+    console.error('AI Auto-Shortlist Error:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   analyzeCV,
   rephraseText,
@@ -401,5 +442,6 @@ module.exports = {
   getAIInsights,
   getOutreachDraft,
   getCustomizedCV,
-  getCareerTips
+  getCareerTips,
+  autoShortlistCandidates
 };

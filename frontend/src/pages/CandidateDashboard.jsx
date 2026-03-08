@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaUser, FaCheckCircle, FaClock, FaBriefcase, FaChartLine, FaUpload, FaEdit, FaSearch, FaBell, FaTrophy, FaFileAlt, FaBars } from "react-icons/fa";
+import { FaUser, FaCheckCircle, FaClock, FaBriefcase, FaChartLine, FaUpload, FaEdit, FaSearch, FaBell, FaTrophy, FaFileAlt, FaBars, FaSync } from "react-icons/fa";
 import { toast } from "react-toastify";
 import Sidebar from "../components/Sidebar";
 import FileUpload from "../components/FileUpload";
@@ -24,6 +24,7 @@ const CandidateDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [openConversationId, setOpenConversationId] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // CV Viewer State
   const [isCVModalOpen, setIsCVModalOpen] = useState(false);
@@ -38,6 +39,12 @@ const CandidateDashboard = () => {
 
   const handleOpenCV = () => {
     setIsCVModalOpen(true);
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshUser();
+    setIsRefreshing(false);
   };
 
   useEffect(() => {
@@ -98,6 +105,13 @@ const CandidateDashboard = () => {
                   <p className="text-gray-600 hidden md:block">Here's your career progress overview and personalized recommendations.</p>
                 </div>
                 <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
+                    className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition font-medium disabled:opacity-50"
+                  >
+                    <FaSync className={isRefreshing ? 'animate-spin' : ''} /> Refresh
+                  </button>
                   {userData?.cvUrl && (
                     <button
                       onClick={handleOpenCV}

@@ -11,6 +11,7 @@ export const useSocket = () => {
 export const SocketProvider = ({ children }) => {
     const [socket, setSocket] = useState(null);
     const [incomingMessage, setIncomingMessage] = useState(null);
+    const [applicationUpdate, setApplicationUpdate] = useState(null);
     const { user } = useAuth();
     const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
     const [notificationPermission, setNotificationPermission] = useState(Notification.permission);
@@ -67,6 +68,11 @@ export const SocketProvider = ({ children }) => {
                 }
             });
 
+            newSocket.on('application_status_updated', (data) => {
+                console.log('📋 Application status updated:', data);
+                setApplicationUpdate(data);
+            });
+
             setSocket(newSocket);
 
             return () => {
@@ -84,10 +90,16 @@ export const SocketProvider = ({ children }) => {
         setIncomingMessage(null);
     }, []);
 
+    const clearApplicationUpdate = useCallback(() => {
+        setApplicationUpdate(null);
+    }, []);
+
     const value = {
         socket,
         incomingMessage,
-        clearIncomingMessage
+        clearIncomingMessage,
+        applicationUpdate,
+        clearApplicationUpdate
     };
 
     return (

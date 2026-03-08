@@ -292,4 +292,75 @@ router.get('/:id/outreach-draft', auth, async (req, res) => {
     }
 });
 
+// @route   POST /api/applications/job/:jobId/auto-shortlist
+// @desc    AI automatically shortlists candidates for a job
+// @access  Private (Recruiter only)
+router.post('/job/:jobId/auto-shortlist', auth, async (req, res) => {
+    try {
+        if (req.user.role !== 'recruiter') {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+
+        const job = await Job.findById(req.params.jobId);
+        if (!job) {
+            return res.status(404).json({ success: false, error: 'Job not found' });
+        }
+
+        const applications = await Application.find({ job: req.params.jobId, status: 'Applied' })
+            .populate('candidate');
+
+        if (applications.length === 0) {
+            return res.json({ success: true, message: 'No applications to shortlist', data: [] });
+        }
+
+        // Fetch profiles for all candidates
+        const enrichedApplications = await Promise.all(applications.map(async (app) => {
+            const profile = await Profile.findOne({ user: app.candidate._id });
+            return { ...app._doc, candidateProfile: profile };
+        }));
+
+        const { autoShortlistCandidates } = require('../utils/ai');
+        const decisions = await autoShortlistCandidates(job, enrichedApplications);
+
+        // Update application statuses
+        const updates = [];
+        for (const decision of decisions) {
+            if (decision.status === 'Shortlisted') {
+                const app = await Application.findByIdAndUpdate(
+                    decision.applicationId,
+                    { status: 'Shortlisted' },
+                    { new: true }
+                );
+                if (app) {
+                    updates.push({ applicationId: decision.applicationId, status: 'Shortlisted', reason: decision.reason });
+                    
+                    // Notify candidate
+                    const io = req.app.get('io');
+                    const notification = new Notification({
+                        recipient: app.candidate,
+                        sender: req.user.id,
+                        type: 'status_update',
+                        content: `Great news! You've been shortlisted for ${job.title}`,
+                        link: '/candidate/dashboard'
+                    });
+                    await notification.save();
+                    
+                    if (io) {
+                        io.to(app.candidate.toString()).emit('new_notification', { notification });
+                        io.to(app.candidate.toString()).emit('application_status_updated', {
+                            applicationId: app._id,
+                            status: 'Shortlisted'
+                        });
+                    }
+                }
+            }
+        }
+
+        res.json({ success: true, data: updates, message: `${updates.length} candidates auto-shortlisted` });
+    } catch (err) {
+        console.error('Auto-Shortlist Error:', err);
+        res.status(500).json({ success: false, error: 'Failed to auto-shortlist candidates' });
+    }
+});
+
 module.exports = router;
