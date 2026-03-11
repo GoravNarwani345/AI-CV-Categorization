@@ -406,15 +406,29 @@ const getCareerTips = async (cvText) => {
     const prompt = `
         You are a senior career advisor. Based STRICTLY on the candidate's raw CV text below, provide:
         1. 4 SPECIFIC, non-generic career tips/suggestions that leverage their existing experience and address their actual skill gaps.
-        2. 3-4 recommended certificate courses that would logically be the next step for this specific professional journey.
+        2. EXACTLY 3 recommended certificate courses with this MANDATORY structure:
+           - 2 FREE courses (from Coursera, edX, YouTube, FreeCodeCamp, etc.)
+           - 1 PAID course (from Udemy, Pluralsight, LinkedIn Learning, etc.)
 
         Avoid generic advice like "networking" or "keep learning". Instead, mention specific technologies, roles, or industry trends relevant to their experience.
+
+        MANDATORY COURSE STRUCTURE:
+        - Course 1: FREE (type: "Free")
+        - Course 2: FREE (type: "Free") 
+        - Course 3: PAID (type: "Paid")
 
         Return ONLY a JSON object: 
         { 
           "tips": [{ "title": "...", "description": "...", "iconType": "book|cert|users|lightbulb" }],
-          "courses": [{ "title": "...", "description": "...", "provider": "Coursera|Udemy|edX|Other", "type": "Free|Paid", "relevance": "Explain why this helps", "platformUrl": "https://..." }]
+          "courses": [
+            { "title": "...", "description": "...", "provider": "Coursera|edX|YouTube|FreeCodeCamp", "type": "Free", "relevance": "Explain why this helps", "platformUrl": "https://..." },
+            { "title": "...", "description": "...", "provider": "Coursera|edX|YouTube|FreeCodeCamp", "type": "Free", "relevance": "Explain why this helps", "platformUrl": "https://..." },
+            { "title": "...", "description": "...", "provider": "Udemy|Pluralsight|LinkedIn Learning", "type": "Paid", "relevance": "Explain why this helps", "platformUrl": "https://..." }
+          ]
         }
+        
+        EXAMPLES OF FREE PROVIDERS: Coursera (audit mode), edX (audit mode), YouTube, FreeCodeCamp, Khan Academy, MIT OpenCourseWare, Google Digital Garage
+        EXAMPLES OF PAID PROVIDERS: Udemy, Pluralsight, LinkedIn Learning, Skillshare, MasterClass, A Cloud Guru
         
         Candidate CV Text:
         ---
