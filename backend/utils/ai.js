@@ -316,10 +316,9 @@ const getCustomizedCV = async (profile, jobInfo, conversation = []) => {
         You are a World-Class AI Career Architect specializing in high-converting, ATS-optimized CV customization.
         
         GOAL:
-        Customize the candidate's CV for a specific target job. 
+        Customize the candidate's CV for a specific target job, INCLUDING FRESHERS AND ENTRY-LEVEL CANDIDATES.
         
-        CORE PRINCIPLE: 
-        If the jobInfo is too brief (like just a job title or one line), or if the candidate's profile lacks sufficient detail to create a meaningful customization, you MUST ask specific questions to gather more information.
+        CRITICAL: You MUST handle ALL experience levels - from freshers to senior professionals. For freshers, focus on education, projects, internships, skills, and potential.
 
         TARGET JOB:
         ${jobInfo}
@@ -333,39 +332,57 @@ const getCustomizedCV = async (profile, jobInfo, conversation = []) => {
         CONVERSATION HISTORY:
         ${conversation.map(c => `${c.role === 'user' ? 'Candidate' : 'AI'}: ${c.text}`).join('\n')}
 
-        DECISION LOGIC:
-        1. IF the jobInfo is very brief (less than 50 words, just a title, or lacks specific requirements/skills), return "status": "needs_info" and ask 2-3 specific questions about:
-           - What are the key technical skills required?
-           - What are the main responsibilities?
-           - What experience level is needed?
-           
-        2. IF the candidate's profile is too sparse (empty bio, no experience, or very basic info), return "status": "needs_info" and ask about:
-           - Specific achievements or projects
-           - Technologies they've worked with
-           - Quantifiable results from their work
-           
-        3. ONLY return "status": "completed" if you have sufficient information from BOTH the job description AND candidate profile to create meaningful customizations.
+        FRESHER/ENTRY-LEVEL HANDLING:
+        If candidate has NO professional experience or is a fresher, ask about:
+        - Academic projects and assignments
+        - Internships or part-time work
+        - Personal projects and side projects
+        - Certifications and online courses
+        - Hackathons, competitions, or coding challenges
+        - Volunteer work or freelance projects
+        - Technical skills learned through education
+        - Soft skills and leadership in college/university
 
-        INSTRUCTIONS FOR COMPLETION:
-        When you have enough data, provide:
-        - Rewrite the "bio" to be a punchy, 3-sentence Executive Summary tailored to this role
-        - For "experience", rewrite descriptions to highlight relevant skills and achievements
-        - For "skills", provide up to 12 skills that match the job requirements
-        - For "skillGapAnalysis", compare candidate's skills against job requirements
-        
-        Return ONLY valid JSON in this exact format:
+        QUESTION CATEGORIES WITH EXAMPLES:
+
+        **FOR FRESHERS/ENTRY-LEVEL:**
+        - "What academic projects, assignments, or capstone projects have you completed? (e.g., built a web application for final year project, created mobile app for coursework, developed database system for college assignment)"
+        - "What internships, part-time jobs, or volunteer work have you done? (e.g., 3-month internship at tech company, part-time web development work, volunteered to build website for local NGO)"
+        - "What personal projects or side projects have you built? (e.g., personal portfolio website, GitHub projects, mobile apps, automation scripts, open-source contributions)"
+        - "What certifications, online courses, or bootcamps have you completed? (e.g., completed React course on Udemy, finished Google Data Analytics Certificate, AWS Cloud Practitioner certified)"
+        - "What programming languages and technologies have you learned through education or self-study? (e.g., Java from university, Python through online courses, React from personal projects)"
+
+        **FOR EXPERIENCED PROFESSIONALS:**
+        - "What specific programming languages and frameworks are required for this role? (e.g., Python, JavaScript, React, Node.js, Django, PostgreSQL, MongoDB)"
+        - "What certifications are preferred or required for this position? (e.g., AWS Solutions Architect, Google Cloud Professional, Microsoft Azure, Docker Certified)"
+        - "What specific projects have you worked on with measurable impact? (e.g., built e-commerce platform increasing sales by 40%, optimized database reducing query time by 60%)"
+        - "What leadership, mentoring, or team collaboration experience do you have? (e.g., mentored 3 junior developers, led cross-functional team of 8, managed $500K project budget)"
+
+        **FOR ALL CANDIDATES:**
+        - "What technical skills do you want to highlight for this role? (e.g., programming languages, frameworks, tools, databases, cloud platforms)"
+        - "What soft skills and achievements should we emphasize? (e.g., problem-solving, teamwork, communication, leadership, analytical thinking)"
+
+        DECISION LOGIC:
+        - IF candidate is fresher/entry-level (no professional experience) → ask about academic projects, internships, personal projects, certifications
+        - IF job info is brief → ask about specific requirements and responsibilities
+        - IF experienced candidate lacks details → ask about professional projects and achievements
+        - ALWAYS try to create a CV even for freshers by focusing on education, projects, and potential
+
+        IMPORTANT: Never refuse to create a CV for freshers. Always find ways to highlight their education, projects, skills, and potential.
+
+        Return ONLY valid JSON:
         {
           "status": "needs_info" | "completed",
-          "questions": ["Specific question 1?", "Specific question 2?"],
+          "questions": ["Question with examples for their experience level?"],
           "customizedData": { 
-            "bio": "...", 
+            "bio": "Tailored bio highlighting education and potential for freshers, or experience for professionals", 
             "experience": [
-              { "index": 0, "description": "Professional bullet points tailored to job..." }
+              { "index": 0, "description": "Enhanced description focusing on relevant skills and achievements" }
             ], 
-            "skills": ["Skill 1", "Skill 2"],
+            "skills": ["Relevant skills for the job"],
             "skillGapAnalysis": {
-              "matchedSkills": ["existing skills that match job"],
-              "missingSkills": ["skills needed but candidate lacks"]
+              "matchedSkills": ["skills they have"],
+              "missingSkills": ["skills to develop"]
             }
           }
         }
@@ -374,7 +391,7 @@ const getCustomizedCV = async (profile, jobInfo, conversation = []) => {
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [{ role: "user", content: prompt }],
-      temperature: 0.3
+      temperature: 0.2
     });
     
     return parseAIResponse(response.choices[0].message.content);

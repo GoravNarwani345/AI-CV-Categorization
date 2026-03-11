@@ -271,8 +271,8 @@ const CVCustomizer = () => {
                                 />
                                 <button
                                     onClick={() => handleSmartCustomize()}
-                                    disabled={isCustomizing || !targetJob}
-                                    className="w-full bg-indigo-600 text-white py-3 rounded-xl hover:bg-indigo-700 transition font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-100 disabled:opacity-50"
+                                    disabled={isCustomizing || !targetJob.trim()}
+                                    className="w-full bg-indigo-600 text-white py-3 rounded-xl hover:bg-indigo-700 transition font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {isCustomizing ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <FaRobot />}
                                     Analyze & Tailor CV
@@ -403,50 +403,107 @@ const CVCustomizer = () => {
             {/* AI Questions Modal */}
             {aiQuestions.length > 0 && (
                 <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-300"
                     onClick={(e) => e.target === e.currentTarget && setAiQuestions([])}
                 >
-                    <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-white/20 animate-in zoom-in-95 duration-300">
-                        <div className="bg-gradient-to-br from-indigo-600 to-blue-700 p-8 text-white relative">
-                            <button className="absolute top-6 right-8 text-white/40 group cursor-pointer hover:text-white transition-colors p-2" onClick={() => setAiQuestions([])}>
-                                <FaTimes size={20} />
+                    <div className="bg-white w-full max-w-2xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-white/20 animate-in zoom-in-95 duration-300">
+                        {/* Header */}
+                        <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 p-6 text-white relative">
+                            <button 
+                                className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10" 
+                                onClick={() => setAiQuestions([])}
+                            >
+                                <FaTimes size={18} />
                             </button>
-                            <div className="w-16 h-16 bg-white/20 rounded-2xl backdrop-blur-md flex items-center justify-center mb-4">
-                                <FaRobot size={32} />
+                            <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 bg-white/20 rounded-2xl backdrop-blur-md flex items-center justify-center">
+                                    <FaRobot size={28} className="text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold mb-1">AI Needs More Details</h3>
+                                    <p className="text-blue-100 text-sm opacity-90">Help me create the perfect CV by answering these questions</p>
+                                </div>
                             </div>
-                            <h3 className="text-2xl font-bold">Refining Your Targeting</h3>
-                            <p className="text-blue-100 mt-1 opacity-80">AI needs a bit more context to make your CV stand out for this role.</p>
                         </div>
 
-                        <div className="p-8 space-y-6 overflow-y-auto max-h-[60vh]">
+                        {/* Questions Content */}
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50">
+                            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                        <span className="text-white text-xs font-bold">{aiQuestions.length}</span>
+                                    </div>
+                                    <span className="text-blue-700 font-semibold text-sm">Questions to optimize your CV</span>
+                                </div>
+                                <p className="text-blue-600 text-xs">The more details you provide, the better I can tailor your CV for this specific role.</p>
+                            </div>
+
                             {aiQuestions.map((q, i) => (
-                                <div key={i} className="space-y-2">
-                                    <label className="text-sm font-bold text-slate-800 tracking-tight leading-relaxed">{q}</label>
-                                    <textarea
-                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none h-24 resize-none transition-all"
-                                        placeholder="Your answer..."
-                                        value={aiAnswers[q] || ""}
-                                        onChange={e => setAiAnswers({ ...aiAnswers, [q]: e.target.value })}
-                                    />
+                                <div key={i} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                                    <div className="flex items-start gap-3 mb-3">
+                                        <div className="w-7 h-7 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm shrink-0 mt-0.5">
+                                            {i + 1}
+                                        </div>
+                                        <div className="flex-1">
+                                            <label className="text-gray-800 font-semibold text-sm leading-relaxed block mb-3">
+                                                {q}
+                                            </label>
+                                            <textarea
+                                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none h-28 resize-none transition-all placeholder-gray-400"
+                                                placeholder="Share your experience, skills, or specific details..."
+                                                value={aiAnswers[q] || ""}
+                                                onChange={e => setAiAnswers({ ...aiAnswers, [q]: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             ))}
                         </div>
 
-                        <div className="p-8 pt-0 bg-white">
-                            <button
-                                onClick={() => handleSmartCustomize(true)}
-                                disabled={isCustomizing}
-                                className="w-full bg-indigo-600 text-white py-4 rounded-2xl hover:bg-indigo-700 transition font-bold flex items-center justify-center gap-2 shadow-xl shadow-indigo-100"
-                            >
-                                {isCustomizing ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <FaCheckCircle />}
-                                Finalize & Regenerate CV
-                            </button>
-                            <button
-                                onClick={() => setAiQuestions([])}
-                                className="w-full mt-4 text-sm font-bold text-gray-400 hover:text-gray-600"
-                            >
-                                Cancel Optimization
-                            </button>
+                        {/* Footer Actions */}
+                        <div className="p-6 bg-white border-t border-gray-100">
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <button
+                                    onClick={() => handleSmartCustomize(true)}
+                                    disabled={isCustomizing || Object.keys(aiAnswers).length === 0}
+                                    className="flex-1 bg-gradient-to-r from-indigo-600 to-blue-600 text-white py-4 rounded-2xl hover:from-indigo-700 hover:to-blue-700 transition-all font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isCustomizing ? (
+                                        <>
+                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FaCheckCircle />
+                                            Generate Customized CV
+                                        </>
+                                    )}
+                                </button>
+                                <button
+                                    onClick={() => setAiQuestions([])}
+                                    className="sm:w-auto px-6 py-4 text-gray-600 hover:text-gray-800 font-semibold text-sm transition-colors rounded-2xl hover:bg-gray-50"
+                                >
+                                    Skip for Now
+                                </button>
+                            </div>
+                            
+                            {/* Progress Indicator */}
+                            <div className="mt-4 flex items-center justify-center gap-2">
+                                <div className="text-xs text-gray-500">
+                                    Answered: {Object.keys(aiAnswers).filter(k => aiAnswers[k]?.trim()).length} of {aiQuestions.length}
+                                </div>
+                                <div className="flex gap-1">
+                                    {aiQuestions.map((_, i) => (
+                                        <div 
+                                            key={i} 
+                                            className={`w-2 h-2 rounded-full transition-colors ${
+                                                aiAnswers[aiQuestions[i]]?.trim() ? 'bg-green-400' : 'bg-gray-200'
+                                            }`}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
