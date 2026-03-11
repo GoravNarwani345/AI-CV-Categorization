@@ -1,10 +1,11 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const OpenAI = require('openai');
 const pdf = require('pdf-parse');
 const fs = require('fs');
 const path = require('path');
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "AIzaSyANUmhMTjTG3nV5_5DuNGon7CCO0Kn7MMI");
-const MODEL_NAME = "gemini-2.5-flash";
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
 /**
  * Standardizes AI response by cleaning markdown and parsing JSON
@@ -55,7 +56,7 @@ const parseAIResponse = (text) => {
 
 const analyzeCV = async (filePath) => {
   try {
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.OPENAI_API_KEY) {
       throw new Error('AI Service not configured (API Key missing)');
     }
 
@@ -64,8 +65,6 @@ const analyzeCV = async (filePath) => {
     const data = await pdf(dataBuffer);
     const text = data.text;
     console.log(`📄 Extracted ${text.length} characters of text from PDF`);
-
-    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
 
     const prompt = `
         You are an elite HR Tech AI specialized in CV parsing and candidate profiling. 
@@ -102,9 +101,13 @@ const analyzeCV = async (filePath) => {
         ---
         `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return parseAIResponse(response.text());
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3
+    });
+    
+    return parseAIResponse(response.choices[0].message.content);
   } catch (error) {
     console.error('AI CV Parsing Error:', error);
     throw error;
@@ -113,11 +116,9 @@ const analyzeCV = async (filePath) => {
 
 const rephraseText = async (text, context) => {
   try {
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.OPENAI_API_KEY) {
       throw new Error('AI Service not configured (API Key missing)');
     }
-
-    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
 
     const prompt = `
         You are an elite AI Career Coach and Resume Writer.
@@ -137,9 +138,13 @@ const rephraseText = async (text, context) => {
         3. Make it impactful, action-oriented, and ATS-friendly.
         `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return response.text().trim().replace(/^["']|["']$/g, '');
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3
+    });
+    
+    return response.choices[0].message.content.trim().replace(/^["']|["']$/g, '');
   } catch (error) {
     console.error('AI Rephrase Error:', error);
     throw error;
@@ -148,8 +153,6 @@ const rephraseText = async (text, context) => {
 
 const getJobMatches = async (cvData, jobs) => {
   try {
-    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
-
     const isText = typeof cvData === 'string';
     const candidateInfo = isText
       ? `Raw CV Text:\n---\n${cvData}\n---`
@@ -170,9 +173,13 @@ const getJobMatches = async (cvData, jobs) => {
         [{"jobId": "...", "matchScore": 95, "matchReason": "Overall fit summary", "requirementsMatch": "..." }]
         `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return parseAIResponse(response.text());
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3
+    });
+    
+    return parseAIResponse(response.choices[0].message.content);
   } catch (error) {
     console.error('AI Matching Error:', error);
     throw error;
@@ -181,8 +188,6 @@ const getJobMatches = async (cvData, jobs) => {
 
 const getRankedCandidates = async (job, candidates) => {
   try {
-    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
-
     const prompt = `
         You are an AI specialized in technical recruiting. Your task is to rank the top 5 candidates from a given pool for a specific job post.
         
@@ -215,9 +220,13 @@ const getRankedCandidates = async (job, candidates) => {
         ]
         `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return parseAIResponse(response.text());
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3
+    });
+    
+    return parseAIResponse(response.choices[0].message.content);
   } catch (error) {
     console.error('AI Ranking Error:', error);
     throw error;
@@ -226,8 +235,6 @@ const getRankedCandidates = async (job, candidates) => {
 
 const getAIInsights = async (job, profile) => {
   try {
-    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
-
     const prompt = `
         You are a senior technical recruiter. Analyze the following candidate profile against the job description.
         
@@ -255,9 +262,13 @@ const getAIInsights = async (job, profile) => {
         }
         `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return parseAIResponse(response.text());
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3
+    });
+    
+    return parseAIResponse(response.choices[0].message.content);
   } catch (error) {
     console.error('AI Insights Error:', error);
     throw error;
@@ -266,8 +277,6 @@ const getAIInsights = async (job, profile) => {
 
 const getOutreachDraft = async (job, candidate, profile) => {
   try {
-    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
-
     const prompt = `
         You are a world-class executive recruiter. Write a professional, warm, and highly personalized LinkedIn-style outreach message.
         
@@ -288,9 +297,13 @@ const getOutreachDraft = async (job, candidate, profile) => {
         5. Return ONLY the text of the message.
         `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return response.text().trim();
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3
+    });
+    
+    return response.choices[0].message.content.trim();
   } catch (error) {
     console.error('AI Outreach Draft Error:', error);
     throw error;
@@ -299,8 +312,6 @@ const getOutreachDraft = async (job, candidate, profile) => {
 
 const getCustomizedCV = async (profile, jobInfo, conversation = []) => {
   try {
-    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
-
     const prompt = `
         You are a World-Class AI Career Architect specializing in high-converting, ATS-optimized CV customization.
         
@@ -308,7 +319,7 @@ const getCustomizedCV = async (profile, jobInfo, conversation = []) => {
         Customize the candidate's CV for a specific target job. 
         
         CORE PRINCIPLE: 
-        Always prioritize EXISTING information in the Candidate Profile. If the profile contains projects, achievements, or metrics that can be mapped to the job requirements, use them! Only ask questions if you genuinely cannot find any relevant proof-points to tailor the content effectively.
+        If the jobInfo is too brief (like just a job title or one line), or if the candidate's profile lacks sufficient detail to create a meaningful customization, you MUST ask specific questions to gather more information.
 
         TARGET JOB:
         ${jobInfo}
@@ -322,39 +333,51 @@ const getCustomizedCV = async (profile, jobInfo, conversation = []) => {
         CONVERSATION HISTORY:
         ${conversation.map(c => `${c.role === 'user' ? 'Candidate' : 'AI'}: ${c.text}`).join('\n')}
 
-        INSTRUCTIONS:
-        1. STRATEGY: Analyze the Target Job for keywords, required tech stacks, and quantifiable goals. Map the Candidate's background (including ALL experience items and projects) to these requirements.
-        2. IF SUFFICIENT DATA (90% of the time): Return JSON "status": "completed". 
-           - MANDATORY: Rewrite the "bio" to be a punchy, 3-sentence Executive Summary tailored to this role.
-           - MANDATORY: For "experience", you MUST iterate through EVERY item provided in the profile. Rewrite the description bullet points to highlight skills and achievements relevant to the Target Job. Use the same "index" as provided.
-           - MANDATORY: For "skills", provide a fully optimized list of up to 12 skills (as strings) that match the job description's "Skills Required".
-           - MANDATORY: For "skillGapAnalysis", compare the candidate's current skills against ALL skills explicitly required by the job. List which skills they already have ("matchedSkills") and which are missing ("missingSkills").
-        3. IF ABSOLUTELY ESSENTIAL DATA IS MISSING: Return JSON "status": "needs_info". 
-           - ONLY do this if there is zero overlap between the candidate's history and the job.
-           - Ask max 2 very specific questions.
+        DECISION LOGIC:
+        1. IF the jobInfo is very brief (less than 50 words, just a title, or lacks specific requirements/skills), return "status": "needs_info" and ask 2-3 specific questions about:
+           - What are the key technical skills required?
+           - What are the main responsibilities?
+           - What experience level is needed?
+           
+        2. IF the candidate's profile is too sparse (empty bio, no experience, or very basic info), return "status": "needs_info" and ask about:
+           - Specific achievements or projects
+           - Technologies they've worked with
+           - Quantifiable results from their work
+           
+        3. ONLY return "status": "completed" if you have sufficient information from BOTH the job description AND candidate profile to create meaningful customizations.
+
+        INSTRUCTIONS FOR COMPLETION:
+        When you have enough data, provide:
+        - Rewrite the "bio" to be a punchy, 3-sentence Executive Summary tailored to this role
+        - For "experience", rewrite descriptions to highlight relevant skills and achievements
+        - For "skills", provide up to 12 skills that match the job requirements
+        - For "skillGapAnalysis", compare candidate's skills against job requirements
         
         Return ONLY valid JSON in this exact format:
         {
-          "status": "completed",
-          "questions": [],
+          "status": "needs_info" | "completed",
+          "questions": ["Specific question 1?", "Specific question 2?"],
           "customizedData": { 
             "bio": "...", 
             "experience": [
-              { "index": 0, "description": "Professional bullet points tailored to job..." },
-              { "index": 1, "description": "..." }
+              { "index": 0, "description": "Professional bullet points tailored to job..." }
             ], 
-            "skills": ["Skill 1", "Skill 2", "..."],
+            "skills": ["Skill 1", "Skill 2"],
             "skillGapAnalysis": {
-              "matchedSkills": ["skill the candidate already has that the job requires"],
-              "missingSkills": ["skill the job requires that the candidate lacks"]
+              "matchedSkills": ["existing skills that match job"],
+              "missingSkills": ["skills needed but candidate lacks"]
             }
           }
         }
         `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return parseAIResponse(response.text());
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3
+    });
+    
+    return parseAIResponse(response.choices[0].message.content);
   } catch (error) {
     console.error('AI CV Customization Error:', error);
     throw error;
@@ -363,8 +386,6 @@ const getCustomizedCV = async (profile, jobInfo, conversation = []) => {
 
 const getCareerTips = async (cvText) => {
   try {
-    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
-
     const prompt = `
         You are a senior career advisor. Based STRICTLY on the candidate's raw CV text below, provide:
         1. 4 SPECIFIC, non-generic career tips/suggestions that leverage their existing experience and address their actual skill gaps.
@@ -384,9 +405,13 @@ const getCareerTips = async (cvText) => {
         ---
     `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return parseAIResponse(response.text());
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3
+    });
+    
+    return parseAIResponse(response.choices[0].message.content);
   } catch (error) {
     console.error('AI Career Tips Error:', error);
     throw error;
@@ -395,8 +420,6 @@ const getCareerTips = async (cvText) => {
 
 const autoShortlistCandidates = async (job, applications) => {
   try {
-    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
-
     const prompt = `
         You are an AI recruiter. Analyze all applications for this job and automatically shortlist the best candidates.
         
@@ -425,9 +448,13 @@ const autoShortlistCandidates = async (job, applications) => {
         ]
         `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return parseAIResponse(response.text());
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3
+    });
+    
+    return parseAIResponse(response.choices[0].message.content);
   } catch (error) {
     console.error('AI Auto-Shortlist Error:', error);
     throw error;
