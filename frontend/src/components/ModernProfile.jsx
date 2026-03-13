@@ -16,8 +16,7 @@ const ModernProfile = ({ user }) => {
         skills: [],
         experience: [],
         education: [],
-        preferences: {},
-        Age: ""
+        preferences: {}
     });
 
     useEffect(() => {
@@ -31,8 +30,7 @@ const ModernProfile = ({ user }) => {
                 skills: user.skills || [],
                 experience: user.experience || [],
                 education: user.education || [],
-                preferences: user.preferences || {},
-                Age: user.Age || ""
+                preferences: user.preferences || {}
             });
         }
     }, [user]);
@@ -80,8 +78,7 @@ const ModernProfile = ({ user }) => {
                 skills: profileData.skills,
                 education: profileData.education,
                 experience: profileData.experience,
-                preferences: profileData.preferences,
-                Age: profileData.Age
+                preferences: profileData.preferences
             };
 
             const res = await updateProfile(user.uid, payload);
@@ -110,8 +107,7 @@ const ModernProfile = ({ user }) => {
                 skills: user.skills || [],
                 experience: user.experience || [],
                 education: user.education || [],
-                preferences: user.preferences || {},
-                Age: user.Age || ""
+                preferences: user.preferences || {}
             });
         }
         setIsEditing(false);
@@ -224,24 +220,7 @@ const ModernProfile = ({ user }) => {
                                         )}
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-4">
-                                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-500 shadow-sm text-xs font-bold">
-                                        AG
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Age</p>
-                                        {isEditing ? (
-                                            <input
-                                                type="number"
-                                                value={profileData.Age}
-                                                onChange={(e) => handleInputChange('Age', e.target.value)}
-                                                className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1 mt-1 focus:ring-2 focus:ring-blue-500 outline-none"
-                                            />
-                                        ) : (
-                                            <p className="text-gray-700 font-medium">{profileData.Age || "Not set"}</p>
-                                        )}
-                                    </div>
-                                </div>
+
                             </div>
                         </div>
 

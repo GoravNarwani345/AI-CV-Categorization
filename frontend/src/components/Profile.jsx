@@ -22,8 +22,7 @@ const Profile = ({ user }) => {
     skills: [],
     experience: [],
     education: [],
-    preferences: {},
-    age: ""
+    preferences: {}
   });
 
   useEffect(() => {
@@ -37,8 +36,7 @@ const Profile = ({ user }) => {
         skills: user.skills || [],
         experience: user.experience || [],
         education: user.education || [],
-        preferences: user.preferences || {},
-        age: user.basicInfo?.age || user.age || ""
+        preferences: user.preferences || {}
       });
     }
   }, [user]);
@@ -86,8 +84,7 @@ const Profile = ({ user }) => {
         skills: profileData.skills,
         education: profileData.education,
         experience: profileData.experience,
-        preferences: profileData.preferences,
-        age: profileData.age
+        preferences: profileData.preferences
       };
 
       const res = await updateProfile(user.uid, payload);
@@ -117,8 +114,7 @@ const Profile = ({ user }) => {
         skills: user.skills || [],
         experience: user.experience || [],
         education: user.education || [],
-        preferences: user.preferences || {},
-        age: user.basicInfo?.age || user.age || ""
+        preferences: user.preferences || {}
       });
     }
     setIsEditing(false);
@@ -212,19 +208,7 @@ const Profile = ({ user }) => {
                       <span>{profileData.location || "Not set"}</span>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 text-gray-600 text-sm md:text-base">
-                    <span className="text-blue-500 font-bold w-5">Age</span>
-                    {isEditing ? (
-                      <input
-                        type="number"
-                        value={profileData.age}
-                        onChange={(e) => handleInputChange('age', e.target.value)}
-                        className="border-b border-gray-300 focus:outline-none w-20"
-                      />
-                    ) : (
-                      <span>{profileData.age || "Not set"}</span>
-                    )}
-                  </div>
+
                 </div>
               </div>
 

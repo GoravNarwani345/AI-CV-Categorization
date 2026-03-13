@@ -29,14 +29,79 @@ const normalizeSkill = (skill) => {
     "typescript": "typescript",
     "ts": "typescript",
     "css3": "css",
+    "css": "css",
     "html5": "html",
+    "html": "html",
     "amazon web services": "aws",
+    "aws": "aws",
     "gsap": "gsap",
     "greensock": "gsap",
     "tailwind": "tailwind",
-    "tailwindcss": "tailwind"
+    "tailwindcss": "tailwind",
+    "python": "python",
+    "py": "python",
+    "java": "java",
+    "c++": "c++",
+    "cpp": "c++",
+    "c#": "c#",
+    "csharp": "c#",
+    "ruby": "ruby",
+    "php": "php",
+    "swift": "swift",
+    "kotlin": "kotlin",
+    "go": "go",
+    "golang": "go",
+    "rust": "rust",
+    "sql": "sql",
+    "mysql": "mysql",
+    "redis": "redis",
+    "docker": "docker",
+    "kubernetes": "kubernetes",
+    "k8s": "kubernetes",
+    "angular": "angular",
+    "angularjs": "angular",
+    "vue": "vue",
+    "vuejs": "vue",
+    "vue.js": "vue",
+    "next.js": "next.js",
+    "nextjs": "next.js",
+    "django": "django",
+    "flask": "flask",
+    "fastapi": "fastapi",
+    "spring": "spring",
+    "graphql": "graphql",
+    "git": "git",
+    "figma": "figma",
+    "machine learning": "machine learning",
+    "ml": "machine learning",
+    "deep learning": "deep learning",
+    "nlp": "nlp",
+    "natural language processing": "nlp",
+    "pytorch": "pytorch",
+    "tensorflow": "tensorflow",
+    "pandas": "pandas",
+    "numpy": "numpy",
+    "scikit-learn": "scikit-learn",
+    "sklearn": "scikit-learn"
   };
-  return map[s] || s;
+
+  // 1. Exact match
+  if (map[s]) return map[s];
+
+  // 2. For multi-word skills like "python programming advance",
+  //    try to find a known keyword within the string
+  const words = s.split(/\s+/);
+  for (const word of words) {
+    if (map[word]) return map[word];
+  }
+
+  // 3. Check if any multi-word map key is contained in the string
+  for (const [key, value] of Object.entries(map)) {
+    if (key.includes(' ') && s.includes(key)) return value;
+  }
+
+  // 4. Fallback: return the first word as a reasonable core skill
+  return s;
 };
 
 const SkillGapAnalysis = ({ user: userProp, matchedSkills, missingSkills, isTargeted = false }) => {
