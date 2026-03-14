@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { FaSync, FaRobot } from 'react-icons/fa';
 import RecruiterSidebar from '../components/RecruiterSidebar';
 import TopBar from '../components/TopBar';
@@ -19,6 +19,7 @@ const RecruiterDashboard = () => {
   const [selectedSection, setSelectedSection] = useState('candidates');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { user: userData, loading: authLoading } = useAuth();
+  const location = useLocation();
   const { applicationUpdate, clearApplicationUpdate } = useSocket();
   const [candidates, setCandidates] = useState([]);
   const [candidatesLoading, setCandidatesLoading] = useState(true);
@@ -163,6 +164,20 @@ const RecruiterDashboard = () => {
       clearApplicationUpdate();
     }
   }, [applicationUpdate, clearApplicationUpdate, loadData]);
+  
+  // Sync section with URL
+  useEffect(() => {
+    const pathParts = location.pathname.split('/');
+    const lastPart = pathParts[pathParts.length - 1];
+    if (['jobs', 'candidates', 'analytics', 'messages', 'profile'].includes(lastPart)) {
+      setSelectedSection(lastPart);
+    }
+  }, [location.pathname]);
+
+  const handleSectionChange = (section) => {
+    setSelectedSection(section);
+    navigate(`/recruiterDashboard/${section}`);
+  };
 
   const handleAutoShortlist = async (jobId) => {
     try {
@@ -321,10 +336,7 @@ const RecruiterDashboard = () => {
       `}>
         <RecruiterSidebar
           selectedSection={selectedSection}
-          onSectionChange={(section) => {
-            setSelectedSection(section);
-            setIsSidebarOpen(false); // Hide after selection
-          }}
+          onSectionChange={handleSectionChange}
         />
       </div>
 

@@ -38,14 +38,17 @@ router.post('/', auth, async (req, res) => {
 
         await newApplication.save();
 
+        // Fetch candidate details to get name (req.user only has id and role from JWT)
+        const candidateUser = await User.findById(req.user.id);
+
         // Real-time Notification for Recruiter
         const io = req.app.get('io');
         const notification = new Notification({
             recipient: job.recruiter,
             sender: req.user.id,
             type: 'application',
-            content: `New application received for ${job.title} from ${req.user.name}`,
-            link: '/recruiter/dashboard'
+            content: `New application received for ${job.title} from ${candidateUser?.name || 'a candidate'}`,
+            link: '/recruiterDashboard/jobs'
         });
         await notification.save();
 
@@ -146,7 +149,7 @@ router.put('/:id', auth, async (req, res) => {
             sender: req.user.id,
             type: 'status_update',
             content: `Your application for ${job?.title || 'a job'} has been updated to: ${status}`,
-            link: '/candidate/dashboard'
+            link: '/candidateDashboard/applications'
         });
         await notification.save();
 
@@ -333,7 +336,7 @@ router.post('/job/:jobId/auto-shortlist', auth, async (req, res) => {
                 );
                 if (app) {
                     updates.push({ applicationId: decision.applicationId, status: 'Shortlisted', reason: decision.reason });
-                    
+
                     // Notify candidate
                     const io = req.app.get('io');
                     const notification = new Notification({
@@ -341,10 +344,10 @@ router.post('/job/:jobId/auto-shortlist', auth, async (req, res) => {
                         sender: req.user.id,
                         type: 'status_update',
                         content: `Great news! You've been shortlisted for ${job.title}`,
-                        link: '/candidate/dashboard'
+                        link: '/candidateDashboard/applications'
                     });
                     await notification.save();
-                    
+
                     if (io) {
                         io.to(app.candidate.toString()).emit('new_notification', { notification });
                         io.to(app.candidate.toString()).emit('application_status_updated', {

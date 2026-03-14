@@ -29,8 +29,8 @@ const App = () => {
       <Route path='/features' element={<FeaturesPage />} />
       <Route path='/about' element={<AboutPage />} />
       <Route path='/contact' element={<ContactPage />} />
-      <Route path='/candidateDashboard' element={<ProtectedRoute element={<CandidateDashboard />} allowedRoles={['candidate']} />} />
-      <Route path='/recruiterDashboard' element={<ProtectedRoute element={<RecruiterDashboard />} allowedRoles={['recruiter']} />} />
+      <Route path='/candidateDashboard/*' element={<ProtectedRoute element={<CandidateDashboard />} allowedRoles={['candidate']} />} />
+      <Route path='/recruiterDashboard/*' element={<ProtectedRoute element={<RecruiterDashboard />} allowedRoles={['recruiter']} />} />
     </Routes>
   )
 }

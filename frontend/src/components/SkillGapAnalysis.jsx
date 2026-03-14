@@ -9,7 +9,13 @@ import { FaChartBar, FaChartPie, FaCheckCircle, FaExclamationCircle } from "reac
 
 const normalizeSkill = (skill) => {
   if (!skill) return "";
-  const s = skill.toLowerCase().trim();
+  let s = skill.toLowerCase().trim();
+  
+  // Remove common suffixes that don't change the base skill
+  s = s.replace(/\s+programming$/, "")
+       .replace(/\s+development$/, "")
+       .replace(/\s+coding$/, "");
+
   const map = {
     "react.js": "react",
     "reactjs": "react",
@@ -34,10 +40,6 @@ const normalizeSkill = (skill) => {
     "html": "html",
     "amazon web services": "aws",
     "aws": "aws",
-    "gsap": "gsap",
-    "greensock": "gsap",
-    "tailwind": "tailwind",
-    "tailwindcss": "tailwind",
     "python": "python",
     "py": "python",
     "java": "java",
@@ -45,62 +47,31 @@ const normalizeSkill = (skill) => {
     "cpp": "c++",
     "c#": "c#",
     "csharp": "c#",
-    "ruby": "ruby",
+    "c": "c",
     "php": "php",
-    "swift": "swift",
-    "kotlin": "kotlin",
-    "go": "go",
-    "golang": "go",
-    "rust": "rust",
-    "sql": "sql",
     "mysql": "mysql",
-    "redis": "redis",
+    "sql": "sql",
     "docker": "docker",
     "kubernetes": "kubernetes",
     "k8s": "kubernetes",
-    "angular": "angular",
-    "angularjs": "angular",
-    "vue": "vue",
-    "vuejs": "vue",
-    "vue.js": "vue",
-    "next.js": "next.js",
-    "nextjs": "next.js",
-    "django": "django",
-    "flask": "flask",
-    "fastapi": "fastapi",
-    "spring": "spring",
-    "graphql": "graphql",
-    "git": "git",
-    "figma": "figma",
     "machine learning": "machine learning",
-    "ml": "machine learning",
-    "deep learning": "deep learning",
-    "nlp": "nlp",
-    "natural language processing": "nlp",
-    "pytorch": "pytorch",
-    "tensorflow": "tensorflow",
-    "pandas": "pandas",
-    "numpy": "numpy",
-    "scikit-learn": "scikit-learn",
-    "sklearn": "scikit-learn"
+    "ml": "machine learning"
   };
 
-  // 1. Exact match
+  // 1. Exact match after cleaning
   if (map[s]) return map[s];
 
-  // 2. For multi-word skills like "python programming advance",
-  //    try to find a known keyword within the string
+  // 2. Word-by-word check
   const words = s.split(/\s+/);
   for (const word of words) {
     if (map[word]) return map[word];
   }
 
-  // 3. Check if any multi-word map key is contained in the string
+  // 3. Multi-word key check
   for (const [key, value] of Object.entries(map)) {
     if (key.includes(' ') && s.includes(key)) return value;
   }
 
-  // 4. Fallback: return the first word as a reasonable core skill
   return s;
 };
 
@@ -326,19 +297,27 @@ const SkillGapAnalysis = ({ user: userProp, matchedSkills, missingSkills, isTarg
           <p className="font-medium">No job demand data available for analysis.</p>
         </div>
       )}
-      <div className="mt-6 pt-6 border-t border-gray-50 flex items-center justify-between">
-        <p className="text-[10px] text-gray-400 italic">
-          * Real-time analysis of top 8 trending skills in your industry.
-        </p>
-        <div className="flex gap-4">
-          <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-            <span className="text-[10px] font-bold text-gray-500 uppercase">You Have</span>
+      <div className="mt-6 pt-6 border-t border-gray-50 space-y-4">
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] text-gray-400 italic font-medium leading-relaxed max-w-[70%]">
+            * This chart analyzes the top 8 skills currently most in-demand across all posted jobs in the market, compared against your current profile.
+          </p>
+          <div className="flex gap-4">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-sm"></div>
+              <span className="text-[10px] font-bold text-gray-500 uppercase">Matched</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm"></div>
+              <span className="text-[10px] font-bold text-gray-500 uppercase">Potential Gap</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
-            <span className="text-[10px] font-bold text-gray-500 uppercase">Gap</span>
-          </div>
+        </div>
+        <div className="bg-blue-50/50 p-2.5 rounded-xl border border-blue-100/50">
+          <p className="text-[9px] text-blue-700/80 font-bold uppercase tracking-tight flex items-center gap-1.5">
+            <FaExclamationCircle size={10} /> Market Insight:
+            <span className="font-normal normal-case">If your skills aren't listed, they may not be among the top 8 most frequent requirements for the current job set.</span>
+          </p>
         </div>
       </div>
     </div>

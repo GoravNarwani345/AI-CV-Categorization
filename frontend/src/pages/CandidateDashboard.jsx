@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { FaUser, FaCheckCircle, FaClock, FaBriefcase, FaChartLine, FaUpload, FaEdit, FaSearch, FaBell, FaTrophy, FaFileAlt, FaBars, FaSync } from "react-icons/fa";
 import { toast } from "react-toastify";
 import Sidebar from "../components/Sidebar";
@@ -21,6 +21,7 @@ import CVViewerModal from "../components/CVViewerModal";
 const CandidateDashboard = () => {
   const [selectedSection, setSelectedSection] = useState("overview");
   const { user: userData, loading: authLoading, setUser, refreshUser } = useAuth();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
   const [openConversationId, setOpenConversationId] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -52,6 +53,21 @@ const CandidateDashboard = () => {
       setIsLoading(false);
     }
   }, [authLoading, userData]);
+
+  // Sync section with URL
+  useEffect(() => {
+    const pathParts = location.pathname.split('/');
+    const lastPart = pathParts[pathParts.length - 1];
+    const validSections = ["overview", "profile", "upload", "jobs", "applications", "skills", "career", "cv-customizer", "messages"];
+    if (validSections.includes(lastPart)) {
+      setSelectedSection(lastPart);
+    }
+  }, [location.pathname]);
+
+  const handleSectionChange = (section) => {
+    setSelectedSection(section);
+    navigate(`/candidateDashboard/${section}`);
+  };
 
   const handleUploadSuccess = async (data) => {
     // Update user state with the full profile returned from the backend
@@ -233,10 +249,7 @@ const CandidateDashboard = () => {
         ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
       `}>
         <Sidebar
-          setSelectedSection={(section) => {
-            setSelectedSection(section);
-            setIsSidebarOpen(false); // Hide after selection
-          }}
+          setSelectedSection={handleSectionChange}
           selectedSection={selectedSection}
           isOpen={isSidebarOpen}
           setIsOpen={setIsSidebarOpen}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaBell, FaCircle, FaUser, FaClock, FaCheckDouble } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import { useSocket } from '../contexts/SocketContext';
 import { fetchNotifications, markNotificationRead, markAllNotificationsRead } from '../services/api';
 
@@ -7,6 +8,7 @@ const NotificationBell = () => {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
+    const navigate = useNavigate();
     const { socket } = useSocket();
     const dropdownRef = useRef(null);
 
@@ -52,6 +54,17 @@ const NotificationBell = () => {
         }
     };
 
+    const handleNotificationClick = async (notif) => {
+        if (!notif.isRead) {
+            await handleMarkRead(notif._id);
+        }
+
+        if (notif.link) {
+            navigate(notif.link);
+            setIsOpen(false);
+        }
+    };
+
     const handleMarkAllRead = async () => {
         const result = await markAllNotificationsRead();
         if (result.success) {
@@ -93,12 +106,12 @@ const NotificationBell = () => {
                             notifications.map((notif) => (
                                 <div
                                     key={notif._id}
-                                    onClick={() => !notif.isRead && handleMarkRead(notif._id)}
+                                    onClick={() => handleNotificationClick(notif)}
                                     className={`p-4 border-b border-gray-50 flex gap-3 hover:bg-gray-50 cursor-pointer transition ${!notif.isRead ? 'bg-blue-50/30' : ''}`}
                                 >
                                     <div className={`p-2 rounded-full h-fit ${notif.type === 'application' ? 'bg-blue-100 text-blue-600' :
-                                            notif.type === 'status_update' ? 'bg-green-100 text-green-600' :
-                                                'bg-purple-100 text-purple-600'
+                                        notif.type === 'status_update' ? 'bg-green-100 text-green-600' :
+                                            'bg-purple-100 text-purple-600'
                                         }`}>
                                         {notif.type === 'application' ? <FaUser size={12} /> : <FaBell size={12} />}
                                     </div>

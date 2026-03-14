@@ -385,22 +385,22 @@ const seedData = async () => {
 
         // 6. Create Notifications (with clear applicant names)
         await Notification.insertMany([
-            { recipient: alexRecruiter._id, sender: candidates[4]._id, type: 'application', content: 'John Doe applied for Senior Frontend Engineer', link: '/recruiter/jobs' },
-            { recipient: candidates[0]._id, sender: alexRecruiter._id, type: 'status_update', content: 'Your application for Senior Frontend Engineer was updated to Shortlisted', link: '/candidate/applications' },
-            { recipient: candidates[2]._id, sender: alexRecruiter._id, type: 'status_update', content: 'Interview scheduled for UI Designer role.', link: '/candidate/applications' },
-            { recipient: candidates[0]._id, sender: alexRecruiter._id, type: 'message', content: 'Alex Johnson sent you a new message.', link: '/candidate/messages' },
+            { recipient: alexRecruiter._id, sender: candidates[4]._id, type: 'application', content: 'John Doe applied for Senior Frontend Engineer', link: '/recruiterDashboard/jobs' },
+            { recipient: candidates[0]._id, sender: alexRecruiter._id, type: 'status_update', content: 'Your application for Senior Frontend Engineer was updated to Shortlisted', link: '/candidateDashboard/applications' },
+            { recipient: candidates[2]._id, sender: alexRecruiter._id, type: 'status_update', content: 'Interview scheduled for UI Designer role.', link: '/candidateDashboard/applications' },
+            { recipient: candidates[0]._id, sender: alexRecruiter._id, type: 'message', content: 'Alex Johnson sent you a new message.', link: '/candidateDashboard/messages' },
             // Sarah HR receives notification from Sarah Chen
-            { recipient: sarahHR._id, sender: candidates[0]._id, type: 'application', content: 'Sarah Chen applied for Technical Project Manager', link: '/recruiter/jobs' },
-            { recipient: sarahHR._id, sender: candidates[0]._id, type: 'application', content: 'Sarah Chen applied for Senior Web Application Developer', link: '/recruiter/jobs' },
+            { recipient: sarahHR._id, sender: candidates[0]._id, type: 'application', content: 'Sarah Chen applied for Technical Project Manager', link: '/recruiterDashboard/jobs' },
+            { recipient: sarahHR._id, sender: candidates[0]._id, type: 'application', content: 'Sarah Chen applied for Senior Web Application Developer', link: '/recruiterDashboard/jobs' },
             // Szabist receives notifications from Kuldip and John
-            { recipient: szabistRecruiter._id, sender: candidates[3]._id, type: 'application', content: 'Kuldip Singh applied for Lecturer - Software Engineering', link: '/recruiter/jobs' },
-            { recipient: szabistRecruiter._id, sender: candidates[4]._id, type: 'application', content: 'John Doe applied for Lecturer - Software Engineering', link: '/recruiter/jobs' },
+            { recipient: szabistRecruiter._id, sender: candidates[3]._id, type: 'application', content: 'Kuldip Singh applied for Lecturer - Software Engineering', link: '/recruiterDashboard/jobs' },
+            { recipient: szabistRecruiter._id, sender: candidates[4]._id, type: 'application', content: 'John Doe applied for Lecturer - Software Engineering', link: '/recruiterDashboard/jobs' },
             // John receives status update from Szabist
-            { recipient: candidates[4]._id, sender: szabistRecruiter._id, type: 'status_update', content: 'Your application for Lecturer - Software Engineering was updated to Shortlisted', link: '/candidate/applications' },
+            { recipient: candidates[4]._id, sender: szabistRecruiter._id, type: 'status_update', content: 'Your application for Lecturer - Software Engineering was updated to Shortlisted', link: '/candidateDashboard/applications' },
             // Sara receives notifications
-            { recipient: saraRecruiter._id, sender: candidates[0]._id, type: 'application', content: 'Sarah Chen applied for Full Stack Developer', link: '/recruiter/jobs' },
-            { recipient: saraRecruiter._id, sender: candidates[1]._id, type: 'application', content: 'Marcus Miller applied for Full Stack Developer', link: '/recruiter/jobs' },
-            { recipient: saraRecruiter._id, sender: candidates[2]._id, type: 'application', content: 'Elena Rodriguez applied for Senior Software Engineer', link: '/recruiter/jobs' }
+            { recipient: saraRecruiter._id, sender: candidates[0]._id, type: 'application', content: 'Sarah Chen applied for Full Stack Developer', link: '/recruiterDashboard/jobs' },
+            { recipient: saraRecruiter._id, sender: candidates[1]._id, type: 'application', content: 'Marcus Miller applied for Full Stack Developer', link: '/recruiterDashboard/jobs' },
+            { recipient: saraRecruiter._id, sender: candidates[2]._id, type: 'application', content: 'Elena Rodriguez applied for Senior Software Engineer', link: '/recruiterDashboard/jobs' }
         ]);
 
         console.log('✨ Database fully seeded with multi-recruiter, multi-status, and deep candidate data!');
