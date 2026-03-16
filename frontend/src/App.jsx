@@ -23,14 +23,28 @@ const App = () => {
   const prevPathRef = useRef(location.pathname);
 
   useEffect(() => {
-    const isDashboardPath = (path) => path.startsWith('/candidateDashboard') || path.startsWith('/recruiterDashboard');
+    const isMemberPath = (path) => 
+      path.startsWith('/candidateDashboard') || 
+      path.startsWith('/recruiterDashboard') || 
+      path.startsWith('/onboarding') || 
+      path.startsWith('/verification-pending') ||
+      path.startsWith('/reset-password') ||
+      path.startsWith('/forgot-password') ||
+      path.startsWith('/verify-email');
     
-    const wasInDashboard = isDashboardPath(prevPathRef.current);
-    const isInDashboard = isDashboardPath(location.pathname);
+    const isInMemberPath = isMemberPath(location.pathname);
+    const hasToken = !!localStorage.getItem('token');
 
-    if (wasInDashboard && !isInDashboard && user) {
-      logout();
-      toast.info("You have been logged out after leaving the dashboard.");
+    if (hasToken && !isInMemberPath) {
+      // Directly remove token as requested
+      localStorage.removeItem('token');
+      localStorage.removeItem('uid');
+      
+      // Also call logout to clear React state if user is present
+      if (user) {
+        logout();
+        toast.info("Session ended.");
+      }
     }
 
     prevPathRef.current = location.pathname;
