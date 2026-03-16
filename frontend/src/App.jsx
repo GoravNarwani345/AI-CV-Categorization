@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { BrowserRouter, Route, Routes, useParams, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Route, Routes, useParams, useNavigate, useLocation } from 'react-router-dom'
+import { useEffect, useState, useRef } from 'react'
 import Home from './pages/Home'
 import GetStarted from './pages/GetStarted'
 import ForgotPassword from './pages/ForgotPassword'
@@ -13,10 +13,29 @@ import RecruiterDashboard from './pages/RecruiterDashboard'
 import VerificationPending from './pages/VerificationPending'
 import ProtectedRoute from './components/ProtectedRoute'
 import { toast } from 'react-toastify'
+import { useAuth } from './contexts/AuthContext'
 
 import VerifyEmail from './pages/VerifyEmail'
 
 const App = () => {
+  const { logout, user } = useAuth();
+  const location = useLocation();
+  const prevPathRef = useRef(location.pathname);
+
+  useEffect(() => {
+    const isDashboardPath = (path) => path.startsWith('/candidateDashboard') || path.startsWith('/recruiterDashboard');
+    
+    const wasInDashboard = isDashboardPath(prevPathRef.current);
+    const isInDashboard = isDashboardPath(location.pathname);
+
+    if (wasInDashboard && !isInDashboard && user) {
+      logout();
+      toast.info("You have been logged out after leaving the dashboard.");
+    }
+
+    prevPathRef.current = location.pathname;
+  }, [location.pathname, logout, user]);
+
   return (
     <Routes>
       <Route path='/' element={<Home />} />

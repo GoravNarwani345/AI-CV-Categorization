@@ -4,6 +4,7 @@ const auth = require('../middleware/auth');
 const Job = require('../models/Job');
 const Profile = require('../models/Profile');
 const User = require('../models/User');
+const Application = require('../models/Application');
 
 // Get all jobs
 router.get('/', async (req, res) => {
@@ -107,7 +108,15 @@ router.get('/match', auth, async (req, res) => {
             return res.status(404).json({ success: false, error: 'No CV uploaded. Please upload a CV first.' });
         }
 
-        const jobs = await Job.find({ status: 'Active' });
+        // Get IDs of jobs the user has already applied for
+        const applications = await Application.find({ candidate: req.user.id });
+        const appliedJobIds = applications.map(app => app.job.toString());
+
+        const jobs = await Job.find({ 
+            status: 'Active',
+            _id: { $nin: appliedJobIds }
+        });
+
         if (jobs.length === 0) {
             return res.json({ success: true, data: [] });
         }
