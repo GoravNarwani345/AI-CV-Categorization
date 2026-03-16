@@ -30,6 +30,7 @@ const App = () => {
       path.startsWith('/verification-pending') ||
       path.startsWith('/reset-password') ||
       path.startsWith('/forgot-password') ||
+      path.startsWith('/getstarted') ||
       path.startsWith('/verify-email');
     
     const isInMemberPath = isMemberPath(location.pathname);
