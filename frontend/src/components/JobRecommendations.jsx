@@ -108,6 +108,10 @@ const JobRecommendations = ({ onApplySuccess }) => {
 
             <div className="flex flex-wrap items-center gap-2 text-[10px] text-gray-500 mb-4 opacity-70 group-hover:opacity-100 transition-opacity">
               <div className="flex items-center gap-1 px-2 py-1 bg-gray-50 rounded-md border border-gray-100">
+                <FaBriefcase className="text-purple-400" />
+                <span>{job.level || 'Fresher'}</span>
+              </div>
+              <div className="flex items-center gap-1 px-2 py-1 bg-gray-50 rounded-md border border-gray-100">
                 <FaMapMarkerAlt className="text-blue-400" />
                 <span>{job.location || 'Remote'}</span>
               </div>

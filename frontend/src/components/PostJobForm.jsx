@@ -8,6 +8,7 @@ const PostJobForm = ({ isOpen, onClose, onSubmit, editMode = false, existingJob 
     company: '',
     location: '',
     type: 'Full-time',
+    level: 'Fresher',
     salary: '',
     description: '',
     requirements: [''],
@@ -118,6 +119,7 @@ const PostJobForm = ({ isOpen, onClose, onSubmit, editMode = false, existingJob 
         company: '',
         location: '',
         type: 'Full-time',
+        level: 'Fresher',
         salary: '',
         description: '',
         requirements: [''],
@@ -206,6 +208,25 @@ const PostJobForm = ({ isOpen, onClose, onSubmit, editMode = false, existingJob 
                 <option value="Contract">Contract</option>
                 <option value="Freelance">Freelance</option>
                 <option value="Internship">Internship</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Job Level *
+              </label>
+              <select
+                name="level"
+                value={formData.level}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="Fresher">Fresher</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Bachelor">Bachelor</option>
+                <option value="Graduate">Graduate</option>
+                <option value="Senior">Senior</option>
+                <option value="Expert">Expert</option>
               </select>
             </div>
 
