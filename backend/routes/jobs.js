@@ -112,12 +112,123 @@ router.get('/match', auth, async (req, res) => {
         const applications = await Application.find({ candidate: req.user.id });
         const appliedJobIds = applications.map(app => app.job.toString());
 
-        const jobs = await Job.find({ 
+        // Get user's current companies/organizations to exclude
+        const currentCompanies = (profile.experience || [])
+            .map(exp => exp.company ? exp.company.trim().toLowerCase() : '')
+            .filter(c => c.length > 0);
+        
+        // Also check education institutions
+        const currentInstitutions = (profile.education || [])
+            .map(edu => edu.institution ? edu.institution.trim().toLowerCase() : '')
+            .filter(i => i.length > 0);
+        
+        // Combine both for comprehensive filtering
+        const userOrganizations = [...currentCompanies, ...currentInstitutions];
+        
+        console.log('👤 User Profile Data:');
+        console.log('   - Experience:', profile.experience?.map(e => e.company));
+        console.log('   - Education:', profile.education?.map(e => e.institution));
+        console.log('🏢 User Organizations to Exclude:', userOrganizations);
+
+        // Helper function to check if job company matches user's company/organization
+        const isUserOrganization = (jobCompany) => {
+            if (!jobCompany) return false;
+            const jobCompanyLower = jobCompany.trim().toLowerCase();
+            
+            return userOrganizations.some(userOrg => {
+                console.log(`      Comparing "${jobCompanyLower}" with user org "${userOrg}"`);
+                
+                // Extract main keywords (remove common words)
+                const extractKeywords = (name) => {
+                    return name
+                        .replace(/\b(university|institute|college|campus|school|academy|technology|sciences?|pvt|ltd|limited|inc|corporation|company|org|organization|the|of|and)\b/gi, '')
+                        .trim()
+                        .split(/\s+/)
+                        .filter(word => word.length > 2);
+                };
+                
+                const userKeywords = extractKeywords(userOrg);
+                const jobKeywords = extractKeywords(jobCompanyLower);
+                
+                console.log(`      User keywords: [${userKeywords.join(', ')}]`);
+                console.log(`      Job keywords: [${jobKeywords.join(', ')}]`);
+                
+                // Check if any significant keyword matches (at least 3 characters)
+                if (userKeywords.length > 0 && jobKeywords.length > 0) {
+                    const hasMatch = userKeywords.some(uk => 
+                        jobKeywords.some(jk => {
+                            // Match if keywords are similar (contains or is contained)
+                            if (uk.length >= 3 && jk.length >= 3) {
+                                const matches = jk.includes(uk) || uk.includes(jk);
+                                if (matches) {
+                                    console.log(`      ⚠️ Keyword match found: "${uk}" <-> "${jk}"`);
+                                }
+                                return matches;
+                            }
+                            return false;
+                        })
+                    );
+                    if (hasMatch) {
+                        console.log(`      🚫 MATCH - Excluding job from "${jobCompany}" - matches user org "${userOrg}"`);
+                        return true;
+                    }
+                }
+                
+                // Also check direct substring match for full names
+                if (userOrg.length >= 3 && jobCompanyLower.length >= 3) {
+                    if (jobCompanyLower.includes(userOrg) || userOrg.includes(jobCompanyLower)) {
+                        console.log(`      🚫 MATCH - Direct substring match: "${jobCompany}" <-> "${userOrg}"`);
+                        return true;
+                    }
+                }
+                
+                console.log(`      ✓ No match`);
+                return false;
+            });
+        };
+
+        // Simple heuristic to determine user level for basic filtering
+        const userExperienceYears = profile.experience?.length || 0;
+        const userEducation = (profile.education || []).map(edu => edu.degree.toLowerCase());
+        
+        const isGraduate = userEducation.some(deg => deg.includes('master') || deg.includes('ms') || deg.includes('phd'));
+        const isBachelor = userEducation.some(deg => deg.includes('bachelor') || deg.includes('bs') || deg.includes('be'));
+        const isFresher = userExperienceYears === 0;
+
+        // Get all active jobs that user hasn't applied to
+        const query = { 
             status: 'Active',
             _id: { $nin: appliedJobIds }
-        });
+        };
 
-        if (jobs.length === 0) {
+        const jobs = await Job.find(query);
+
+        // Filter out jobs from user's current companies/organizations and apply level filtering
+        console.log(`\n📋 Checking ${jobs.length} jobs against user organizations...`);
+        const filteredJobs = jobs.filter(job => {
+            console.log(`   Checking job: "${job.title}" at "${job.company}"`);
+            
+            // Exclude jobs from organizations where user is working/studying
+            if (isUserOrganization(job.company)) {
+                console.log(`   ❌ EXCLUDED - matches user organization`);
+                return false;
+            }
+            
+            // Filter by job level - Fresher jobs only for freshers
+            if (job.level === 'Fresher' && !isFresher) {
+                console.log(`   ❌ EXCLUDED - Fresher job but user is not fresher`);
+                return false;
+            }
+            
+            console.log(`   ✅ INCLUDED`);
+            return true;
+        });
+        
+        console.log(`\n✅ Filtered Jobs: ${filteredJobs.length} out of ${jobs.length} (excluded ${jobs.length - filteredJobs.length} jobs)`);
+
+
+
+        if (filteredJobs.length === 0) {
             return res.json({ success: true, data: [] });
         }
 
@@ -128,7 +239,7 @@ router.get('/match', auth, async (req, res) => {
         let matches;
 
         if (hasStructuredData) {
-            matches = await getJobMatches(profile, jobs);
+            matches = await getJobMatches(profile, filteredJobs);
         } else {
             // Read and parse the CV file directly as fallback
             const fs = require('fs');
@@ -142,7 +253,7 @@ router.get('/match', auth, async (req, res) => {
 
             const dataBuffer = fs.readFileSync(filePath);
             const pdfData = await pdf(dataBuffer);
-            matches = await getJobMatches(pdfData.text, jobs);
+            matches = await getJobMatches(pdfData.text, filteredJobs);
         }
 
         res.json({ success: true, data: matches });

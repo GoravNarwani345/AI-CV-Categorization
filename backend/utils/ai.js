@@ -154,23 +154,80 @@ const rephraseText = async (text, context) => {
 const getJobMatches = async (cvData, jobs) => {
   try {
     const isText = typeof cvData === 'string';
-    const candidateInfo = isText
-      ? `Raw CV Text:\n---\n${cvData}\n---`
-      : `Profile Data:\nBio: ${cvData.basicInfo?.bio}\nSkills: ${JSON.stringify(cvData.skills)}\nExperience: ${JSON.stringify(cvData.experience)}`;
+    
+    // Extract detailed information for better matching
+    let candidateInfo;
+    if (isText) {
+      candidateInfo = `Raw CV Text:\n---\n${cvData}\n---`;
+    } else {
+      // Build detailed profile information
+      const experienceDetails = (cvData.experience || []).map(exp => 
+        `${exp.title} at ${exp.company} (${exp.duration}): ${exp.description || 'N/A'}`
+      ).join('\n');
+      
+      const skillsList = (cvData.skills || []).map(s => 
+        `${s.name} (${s.level})`
+      ).join(', ');
+      
+      const educationDetails = (cvData.education || []).map(edu => 
+        `${edu.degree} from ${edu.institution} (${edu.year})`
+      ).join('\n');
+      
+      candidateInfo = `
+Profile Data:
+Bio: ${cvData.basicInfo?.bio || 'N/A'}
+
+Experience:
+${experienceDetails || 'No experience listed'}
+
+Skills: ${skillsList || 'No skills listed'}
+
+Education:
+${educationDetails || 'No education listed'}
+      `;
+    }
 
     const prompt = `
-        You are an AI matching engine. Compare the candidate's background with the list of jobs provided.
-        Calculate a match percentage (0-100) based on how well the candidate's skills and experience fit each job's requirements.
-        Consider semantic similarity between the candidate's background and the job description.
-
+        You are an AI job matching engine specialized in matching candidates to jobs based on their CV experience and skills.
+        
+        MATCHING CRITERIA (in order of importance):
+        1. SKILLS MATCH (40%): How many of the candidate's skills match the job requirements?
+        2. EXPERIENCE RELEVANCE (35%): Does their work experience align with the job role and responsibilities?
+        3. JOB LEVEL ALIGNMENT (15%): Does their experience level match the job level (Fresher/Intermediate/Senior/Expert)?
+        4. EDUCATION FIT (10%): Does their education background support the role?
+        
+        CRITICAL RULES:
+        - A candidate with 5+ years experience should NOT match well with "Fresher" level jobs (max 30% match)
+        - A fresher (0 years experience) should match best with "Fresher" or "Internship" roles (70-95% match)
+        - Focus heavily on ACTUAL SKILLS mentioned in the CV vs REQUIRED SKILLS in the job
+        - Consider the INDUSTRY and DOMAIN of their experience (e.g., teaching experience for teaching jobs, tech experience for tech jobs)
+        - If candidate has experience in similar roles/companies, increase match score significantly
+        
         Candidate Information:
         ${candidateInfo}
 
-        Jobs:
-        ${jobs.map(j => `ID: ${j._id}, Title: ${j.title}, Requirements: ${JSON.stringify(j.skills)}, Description: ${j.description}`).join('\n\n')}
+        Jobs to Match:
+        ${jobs.map(j => `
+ID: ${j._id}
+Title: ${j.title}
+Company: ${j.company}
+Level: ${j.level || 'Not Specified'}
+Required Skills: ${JSON.stringify(j.skills)}
+Description: ${j.description}
+Requirements: ${JSON.stringify(j.requirements)}
+        `).join('\n---\n')}
 
-        Return ONLY a JSON array of objects: 
-        [{"jobId": "...", "matchScore": 95, "matchReason": "Overall fit summary", "requirementsMatch": "..." }]
+        Return ONLY a JSON array sorted by matchScore (highest first): 
+        [
+          {
+            "jobId": "...", 
+            "matchScore": 85, 
+            "matchReason": "Detailed explanation of why this is a good match based on their specific experience and skills",
+            "requirementsMatch": "List which specific skills and experience from their CV match the job requirements"
+          }
+        ]
+        
+        IMPORTANT: Only include jobs with matchScore >= 40. Exclude poor matches.
         `;
 
     const response = await openai.chat.completions.create({
@@ -179,7 +236,13 @@ const getJobMatches = async (cvData, jobs) => {
       temperature: 0.3
     });
     
-    return parseAIResponse(response.choices[0].message.content);
+    const matches = parseAIResponse(response.choices[0].message.content);
+    
+    // Sort by match score descending and filter out low matches
+    return matches
+      .filter(m => m.matchScore >= 40)
+      .sort((a, b) => b.matchScore - a.matchScore);
+      
   } catch (error) {
     console.error('AI Matching Error:', error);
     throw error;
