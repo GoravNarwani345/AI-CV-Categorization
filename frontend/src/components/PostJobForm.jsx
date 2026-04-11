@@ -23,8 +23,31 @@ const PostJobForm = ({ isOpen, onClose, onSubmit, editMode = false, existingJob 
   useEffect(() => {
     if (isOpen) {
       if (editMode && existingJob) {
-        setFormData(existingJob);
+        // Ensure arrays are properly initialized for editing
+        setFormData({
+          ...existingJob,
+          requirements: existingJob.requirements && existingJob.requirements.length > 0 ? existingJob.requirements : [''],
+          benefits: existingJob.benefits && existingJob.benefits.length > 0 ? existingJob.benefits : [''],
+          skills: existingJob.skills && existingJob.skills.length > 0 ? existingJob.skills : ['']
+        });
       } else {
+        // Reset form for new job
+        setFormData({
+          title: '',
+          company: '',
+          location: '',
+          type: 'Full-time',
+          level: 'Fresher',
+          salary: '',
+          description: '',
+          requirements: [''],
+          benefits: [''],
+          skills: [''],
+          experience: '',
+          department: ''
+        });
+        
+        // Load recruiter's company name
         const loadProfileData = async () => {
           try {
             const result = await fetchData();
@@ -94,25 +117,33 @@ const PostJobForm = ({ isOpen, onClose, onSubmit, editMode = false, existingJob 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
+      // Clean arrays - remove empty strings
+      const cleanedRequirements = formData.requirements.filter(r => r && r.trim() !== '');
+      const cleanedBenefits = formData.benefits.filter(b => b && b.trim() !== '');
+      const cleanedSkills = formData.skills.filter(s => s && s.trim() !== '');
+
       if (editMode && existingJob) {
-        // Send updated job data, but ensure _id and recruiter are handled by backend or properly passed
-        const { _id, recruiter, applicantsCount, postedDate, ...updateData } = formData;
-        onSubmit(updateData);
-      } else {
-        // For new jobs, only send the core form data. 
-        // Backend handles recruiter ID, status, postedDate, and applicantsCount.
-        const { requirements, benefits, skills, ...rest } = formData;
-
-        // Ensure arrays don't have empty strings
-        const cleanedJob = {
-          ...rest,
-          requirements: requirements.filter(r => r.trim() !== ''),
-          benefits: benefits.filter(b => b.trim() !== ''),
-          skills: skills.filter(s => s.trim() !== '')
+        // For edit mode, send all data except system-managed fields
+        const { _id, recruiter, applicantsCount, postedDate, status, ...updateData } = formData;
+        const cleanedData = {
+          ...updateData,
+          requirements: cleanedRequirements,
+          benefits: cleanedBenefits,
+          skills: cleanedSkills
         };
-
+        onSubmit(cleanedData);
+      } else {
+        // For new jobs, send all form data with cleaned arrays
+        const cleanedJob = {
+          ...formData,
+          requirements: cleanedRequirements,
+          benefits: cleanedBenefits,
+          skills: cleanedSkills
+        };
         onSubmit(cleanedJob);
       }
+      
+      // Close form and reset
       onClose();
       setFormData({
         title: '',
