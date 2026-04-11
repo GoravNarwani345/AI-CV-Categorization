@@ -19,6 +19,7 @@ const RecruiterDashboard = () => {
   const [selectedSection, setSelectedSection] = useState('candidates');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { user: userData, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
   const { applicationUpdate, clearApplicationUpdate } = useSocket();
   const [candidates, setCandidates] = useState([]);

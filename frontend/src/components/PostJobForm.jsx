@@ -25,10 +25,18 @@ const PostJobForm = ({ isOpen, onClose, onSubmit, editMode = false, existingJob 
       if (editMode && existingJob) {
         // Ensure arrays are properly initialized for editing
         setFormData({
-          ...existingJob,
+          title: existingJob.title || '',
+          company: existingJob.company || '',
+          location: existingJob.location || '',
+          type: existingJob.type || 'Full-time',
+          level: existingJob.level || 'Fresher',
+          salary: existingJob.salary || '',
+          description: existingJob.description || '',
           requirements: existingJob.requirements && existingJob.requirements.length > 0 ? existingJob.requirements : [''],
           benefits: existingJob.benefits && existingJob.benefits.length > 0 ? existingJob.benefits : [''],
-          skills: existingJob.skills && existingJob.skills.length > 0 ? existingJob.skills : ['']
+          skills: existingJob.skills && existingJob.skills.length > 0 ? existingJob.skills : [''],
+          experience: existingJob.experience || '',
+          department: existingJob.department || ''
         });
       } else {
         // Reset form for new job
@@ -108,7 +116,7 @@ const PostJobForm = ({ isOpen, onClose, onSubmit, editMode = false, existingJob 
     if (!formData.company.trim()) newErrors.company = 'Company name is required';
     if (!formData.location.trim()) newErrors.location = 'Location is required';
     if (!formData.description.trim()) newErrors.description = 'Job description is required';
-    if (!formData.experience.trim()) newErrors.experience = 'Experience level is required';
+    // Experience is optional, so we don't validate it
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -116,6 +124,8 @@ const PostJobForm = ({ isOpen, onClose, onSubmit, editMode = false, existingJob 
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log('Form submitted, editMode:', editMode, 'existingJob:', existingJob);
+    
     if (validateForm()) {
       // Clean arrays - remove empty strings
       const cleanedRequirements = formData.requirements.filter(r => r && r.trim() !== '');
@@ -131,6 +141,7 @@ const PostJobForm = ({ isOpen, onClose, onSubmit, editMode = false, existingJob 
           benefits: cleanedBenefits,
           skills: cleanedSkills
         };
+        console.log('Submitting UPDATE with data:', cleanedData);
         onSubmit(cleanedData);
       } else {
         // For new jobs, send all form data with cleaned arrays
@@ -140,6 +151,7 @@ const PostJobForm = ({ isOpen, onClose, onSubmit, editMode = false, existingJob 
           benefits: cleanedBenefits,
           skills: cleanedSkills
         };
+        console.log('Submitting NEW job with data:', cleanedJob);
         onSubmit(cleanedJob);
       }
       
@@ -159,6 +171,8 @@ const PostJobForm = ({ isOpen, onClose, onSubmit, editMode = false, existingJob 
         experience: '',
         department: ''
       });
+    } else {
+      console.log('Form validation failed:', errors);
     }
   };
 
@@ -277,21 +291,20 @@ const PostJobForm = ({ isOpen, onClose, onSubmit, editMode = false, existingJob 
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Experience Level *
+                Experience Level
               </label>
               <select
                 name="experience"
                 value={formData.experience}
                 onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.experience ? 'border-red-500' : 'border-gray-300'}`}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">Select experience level</option>
+                <option value="">Select experience level (optional)</option>
                 <option value="Entry Level">Entry Level</option>
                 <option value="Mid Level">Mid Level</option>
                 <option value="Senior Level">Senior Level</option>
                 <option value="Executive">Executive</option>
               </select>
-              {errors.experience && <p className="text-red-500 text-sm mt-1">{errors.experience}</p>}
             </div>
 
             <div>
