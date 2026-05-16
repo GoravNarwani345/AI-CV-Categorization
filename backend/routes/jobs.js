@@ -112,23 +112,16 @@ router.get('/match', auth, async (req, res) => {
         const applications = await Application.find({ candidate: req.user.id });
         const appliedJobIds = applications.map(app => app.job.toString());
 
-        // Get user's current companies/organizations to exclude
-        const currentCompanies = (profile.experience || [])
+        // Get user's current companies to exclude
+        // We DO NOT exclude education institutions, so universities can hire their own students
+        const userOrganizations = (profile.experience || [])
             .map(exp => exp.company ? exp.company.trim().toLowerCase() : '')
             .filter(c => c.length > 0);
-        
-        // Also check education institutions
-        const currentInstitutions = (profile.education || [])
-            .map(edu => edu.institution ? edu.institution.trim().toLowerCase() : '')
-            .filter(i => i.length > 0);
-        
-        // Combine both for comprehensive filtering
-        const userOrganizations = [...currentCompanies, ...currentInstitutions];
         
         console.log('👤 User Profile Data:');
         console.log('   - Experience:', profile.experience?.map(e => e.company));
         console.log('   - Education:', profile.education?.map(e => e.institution));
-        console.log('🏢 User Organizations to Exclude:', userOrganizations);
+        console.log('🏢 User Organizations to Exclude (Experience Only):', userOrganizations);
 
         // Helper function to check if job company matches user's company/organization
         const isUserOrganization = (jobCompany) => {
