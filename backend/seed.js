@@ -221,15 +221,15 @@ const seedData = async () => {
             },
             {
                 recruiter: alexRecruiter._id,
-                title: 'Full Stack Ninja',
+                title: 'Lead Solutions Architect',
                 company: 'Innovation Hub',
                 location: 'Hybrid (NYC)',
                 type: 'Full-time',
-                level: 'Fresher',
-                salary: 'PKR 60k - 80k/month',
-                description: 'Entry-level position to learn end-to-end features using Node.js and React.',
-                requirements: ['Basic Node.js', 'React basics', 'Willing to learn Database management'],
-                skills: ['React', 'Node.js', 'MongoDB'],
+                level: 'Expert',
+                salary: 'PKR 450k - 600k/month',
+                description: 'Lead the architectural design and scaling of our AI recruitment platform.',
+                requirements: ['8+ years of experience in system architecture', 'Deep knowledge of microservices and Node.js', 'Experience with AWS and Kubernetes'],
+                skills: ['Node.js', 'AWS', 'Kubernetes', 'System Architecture'],
                 postedDate: new Date()
             }
         ];
@@ -360,15 +360,15 @@ const seedData = async () => {
             },
             {
                 recruiter: szabistRecruiter._id,
-                title: 'Junior Software Engineer',
+                title: 'Professor - Computer Science',
                 company: 'Szabist University Pakistan',
                 location: 'Karachi, Pakistan',
                 type: 'Full-time',
-                level: 'Fresher',
-                salary: 'PKR 40k - 60k/month',
-                description: 'Looking for a fresh graduate to join our internal IT department to develop web apps.',
-                requirements: ['Bachelors in CS/SE', 'Basic React knowledge', 'Eager to learn'],
-                skills: ['React', 'HTML', 'CSS', 'JavaScript'],
+                level: 'Expert',
+                salary: 'PKR 250k - 350k/month',
+                description: 'Lead research, academic curriculum development, and teach senior/graduate CS courses.',
+                requirements: ['PhD in Computer Science', '10+ years teaching/research experience', 'Strong publication record in top-tier journals'],
+                skills: ['Computer Science', 'Research', 'Teaching', 'Curriculum Design'],
                 postedDate: new Date()
             }
         ];
@@ -398,6 +398,19 @@ const seedData = async () => {
                 description: 'Lead development of scalable microservices architecture.',
                 requirements: ['5+ years experience', 'Microservices', 'Cloud platforms'],
                 skills: ['Node.js', 'Python', 'AWS', 'Docker', 'Kubernetes'],
+                postedDate: new Date()
+            },
+            {
+                recruiter: saraRecruiter._id,
+                title: 'Director of AI Engineering',
+                company: 'TechCorp',
+                location: 'Remote',
+                type: 'Full-time',
+                level: 'Expert',
+                salary: 'PKR 600k - 800k/month',
+                description: 'Establish and lead the AI/ML division, driving the design and integration of agentic LLM solutions.',
+                requirements: ['10+ years tech experience with 4+ in AI/ML leadership', 'Proven track record of deploying large-scale AI models', 'Ph.D. or Masters in Computer Science/AI'],
+                skills: ['AI/ML', 'Team Leadership', 'Large Language Models', 'System Scaling'],
                 postedDate: new Date()
             }
         ];

@@ -113,8 +113,9 @@ router.get('/match', auth, async (req, res) => {
         const appliedJobIds = applications.map(app => app.job.toString());
 
         // Get user's current companies to exclude
-        // We DO NOT exclude education institutions, so universities can hire their own students
+        // We ONLY exclude current employers (where duration contains "present")
         const userOrganizations = (profile.experience || [])
+            .filter(exp => exp.duration && exp.duration.toLowerCase().includes('present'))
             .map(exp => exp.company ? exp.company.trim().toLowerCase() : '')
             .filter(c => c.length > 0);
         
