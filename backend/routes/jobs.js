@@ -103,8 +103,8 @@ router.delete('/:id', auth, async (req, res) => {
 // @access  Private
 router.get('/match', auth, async (req, res) => {
     try {
-        const profile = await Profile.findOne({ user: req.user.id });
-        if (!profile || !profile.cvUrl) {
+        const hasStructuredProfile = profile && (profile.skills?.length > 0 || profile.experience?.length > 0);
+        if (!profile || (!profile.cvUrl && !hasStructuredProfile)) {
             return res.status(404).json({ success: false, error: 'No CV uploaded. Please upload a CV first.' });
         }
 

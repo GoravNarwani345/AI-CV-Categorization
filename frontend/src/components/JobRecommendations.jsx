@@ -36,7 +36,7 @@ const JobRecommendations = ({ onApplySuccess }) => {
                 ...jobDetails,
                 match: `${match.matchScore}%`,
                 score: match.matchScore,
-                reason: match.reason
+                reason: match.matchReason || match.reason
               };
             }).filter(j => j._id); // Filter out any jobs not found
 

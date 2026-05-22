@@ -227,7 +227,7 @@ Requirements: ${JSON.stringify(j.requirements)}
           }
         ]
         
-        IMPORTANT: Only include jobs with matchScore >= 40. Exclude poor matches.
+        IMPORTANT: Only include jobs with matchScore >= 20. Exclude poor matches.
         `;
 
     const response = await openai.chat.completions.create({
@@ -240,7 +240,7 @@ Requirements: ${JSON.stringify(j.requirements)}
     
     // Sort by match score descending and filter out low matches
     return matches
-      .filter(m => m.matchScore >= 40)
+      .filter(m => m.matchScore >= 20)
       .sort((a, b) => b.matchScore - a.matchScore);
       
   } catch (error) {
