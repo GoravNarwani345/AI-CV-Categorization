@@ -137,16 +137,14 @@ router.get('/career-tips', auth, async (req, res) => {
 
         const fs = require('fs');
         const path = require('path');
-        const pdf = require('pdf-parse');
+        const { extractTextFromPDF } = require('../utils/pdfParser');
 
         const filePath = path.join(__dirname, '..', profile.cvUrl);
         if (!fs.existsSync(filePath)) {
             return res.status(404).json({ success: false, error: 'CV file not found on server' });
         }
 
-        const dataBuffer = fs.readFileSync(filePath);
-        const pdfData = await pdf(dataBuffer);
-        const cvText = pdfData.text;
+        const cvText = await extractTextFromPDF(filePath);
 
         const { getCareerTips } = require('../utils/ai');
         const careerData = await getCareerTips(cvText);

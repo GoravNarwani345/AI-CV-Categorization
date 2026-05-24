@@ -1,5 +1,5 @@
 const OpenAI = require('openai');
-const pdf = require('pdf-parse');
+const { extractTextFromPDF } = require('./pdfParser');
 const fs = require('fs');
 const path = require('path');
 
@@ -61,9 +61,7 @@ const analyzeCV = async (filePath) => {
     }
 
     console.log('📄 Starting AI analysis for:', path.basename(filePath));
-    const dataBuffer = fs.readFileSync(filePath);
-    const data = await pdf(dataBuffer);
-    const text = data.text;
+    const text = await extractTextFromPDF(filePath);
     console.log(`📄 Extracted ${text.length} characters of text from PDF`);
 
     const prompt = `
@@ -217,17 +215,17 @@ Description: ${j.description}
 Requirements: ${JSON.stringify(j.requirements)}
         `).join('\n---\n')}
 
-        Return ONLY a JSON array sorted by matchScore (highest first): 
+        Return ONLY a JSON array sorted by matchScore (highest first):
         [
           {
             "jobId": "...", 
             "matchScore": 85, 
             "matchReason": "Detailed explanation of why this is a good match based on their specific experience and skills",
-            "requirementsMatch": "List which specific skills and experience from their CV match the job requirements"
+            "requirementsMatch": ["Skill 1", "Skill 2"]
           }
         ]
         
-        IMPORTANT: Only include jobs with matchScore >= 20. Exclude poor matches.
+        IMPORTANT: Only include jobs with matchScore >= 20. Exclude poor matches. You MUST evaluate all jobs and include every job that meets this threshold of 20% or higher. Do not truncate the list.
         `;
 
     const response = await openai.chat.completions.create({

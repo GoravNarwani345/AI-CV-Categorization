@@ -103,6 +103,7 @@ router.delete('/:id', auth, async (req, res) => {
 // @access  Private
 router.get('/match', auth, async (req, res) => {
     try {
+        const profile = await Profile.findOne({ user: req.user.id });
         const hasStructuredProfile = profile && (profile.skills?.length > 0 || profile.experience?.length > 0);
         if (!profile || (!profile.cvUrl && !hasStructuredProfile)) {
             return res.status(404).json({ success: false, error: 'No CV uploaded. Please upload a CV first.' });
@@ -238,16 +239,15 @@ router.get('/match', auth, async (req, res) => {
             // Read and parse the CV file directly as fallback
             const fs = require('fs');
             const path = require('path');
-            const pdf = require('pdf-parse');
+            const { extractTextFromPDF } = require('../utils/pdfParser');
 
             const filePath = path.join(__dirname, '..', profile.cvUrl);
             if (!fs.existsSync(filePath)) {
                 return res.status(404).json({ success: false, error: 'CV file not found on server' });
             }
 
-            const dataBuffer = fs.readFileSync(filePath);
-            const pdfData = await pdf(dataBuffer);
-            matches = await getJobMatches(pdfData.text, filteredJobs);
+            const cvText = await extractTextFromPDF(filePath);
+            matches = await getJobMatches(cvText, filteredJobs);
         }
 
         res.json({ success: true, data: matches });
